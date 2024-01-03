@@ -178,8 +178,8 @@ while True:
     # ): #TODO find good solution
 
     if check_collision(square1_pos, square2_pos, square_size):
-        print("collision detected")
         sx, sy = separate_collision(square1_pos, square2_pos, square_size)
+        print("Collision detected", sx, sy, vertical_velocity1, vertical_velocity2)
         square1_pos[0] += sx
         square1_pos[1] += sy
 
@@ -194,7 +194,7 @@ while True:
         # else:
         #     square1_pos[1] += square_speed
         # Collision handling - exchange vertical velocities
-        # vertical_velocity1, vertical_velocity2 = vertical_velocity2, vertical_velocity1
+        vertical_velocity1, vertical_velocity2 = vertical_velocity2, vertical_velocity1
 
         # # Push squares away horizontally to prevent overlap
 
