@@ -22,7 +22,7 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-speed = 50
+speed = 30
 
 r1 = Rectangle(
     x=square1_pos[0],
@@ -45,7 +45,7 @@ objects = [r1, r2]
 ground_height = 20
 
 # Set up physics variables
-jump_force = 100
+jump_force = 150
 gravity = 9.8
 r1.velocity[1] = 0  # Initial vertical velocity for square 1
 r2.velocity[1] = 0  # Initial vertical velocity for square 2
@@ -58,7 +58,10 @@ move_right = False
 move_up = False
 move_down = False
 
-r1.mass = 10
+r1.mass = 20
+r2.mass = 5
+
+r2.velocity[0] = -5
 
 def check_collision(square1_pos, square2_pos, square_size):
     # return (
@@ -150,6 +153,7 @@ def check_ground_collision(obj):
         obj.velocity[1] = 0  # Stop the square when it hits the ground
         simulate_movement(obj)
 
+
 dt = 1/60 # assuming 60 frames per second
 # Main game loop
 while True:
@@ -215,27 +219,66 @@ while True:
     for obj in objects:
         check_screen_collision(obj)
 
-    if check_collision(r1.pos, r2.pos, square_size):
-        sx, sy = separate_collision(r1.pos, r2.pos, square_size)
-        print("Collision detected", sx, sy, r1.velocity[1], r2.velocity[1])
-        #   -- find the collision normal
-        d = math.sqrt(sx**2 + sy**2)
-        nx, ny = sx / d, sy / d
-        # relative velocity
-        vx, vy = r1.velocity[0] - (r2.velocity[0] or 0), r1.velocity[1] - (r2.velocity[1] or 0)
-        # penetration speed
-        ps = vx*nx + vy*ny
-        # if ps <= 0:
-        #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
-        #     print("Move the squares away from each other")
-        #     print(r1.velocity, r2.velocity)
-        #     # separate the two objects
-        r1.pos[0] += sx
-        r1.pos[1] += sy
+    for obj in objects:
+        for obj2 in objects:
+            if obj != obj2:
+                # print(obj, obj2)
+                if check_collision(obj.pos, obj2.pos, obj.width):
+                    sx, sy = separate_collision(obj.pos, obj2.pos, square_size)
+                    # print("Collision detected", sx, sy, obj.velocity[1], obj2.velocity[1])
+                    #   -- find the collision normal
+                    d = math.sqrt(sx**2 + sy**2)
+                    nx, ny = sx / d, sy / d
+                    # relative velocity
+                    vx, vy = obj.velocity[0] - (obj2.velocity[0] or 0), obj.velocity[1] - (obj2.velocity[1] or 0)
+                    init_obj_velocity = obj.velocity.copy()
+                    # penetration speed
+                    ps = vx*nx + vy*ny
+                    if ps <= 0:
+                    #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
+                    #     print("Move the squares away from each other")
+                    #     print(r1.velocity, r2.velocity)
+                    #     # separate the two objects
+                        obj.pos[0] += sx
+                        obj.pos[1] += sy
+
+                    px, py = nx*ps, ny*ps
+                    # ts = vx*ny - vy*nx 
+                    # tx, ty = ny*ts, -nx*ts
+                    tx, ty = vx - px, vy - py
+                    r = 1 + max(obj.bounce, obj2.bounce)
+                    f = 1 + max(obj.friction, obj2.friction)
+                    
+                    
+                    # impulse_y = obj.mass * (obj.velocity[1] - init_obj_velocity[1])
+                    # impulse_x = obj.mass * (obj.velocity[0] - init_obj_velocity[0]) 
+                   
+
+                    obj.velocity[0] -= (px * r + tx * f) #/ obj.mass
+                    obj.velocity[1] -= (py * r + ty * f) #/ obj.mass
+                        
+
+    # if check_collision(r1.pos, r2.pos, square_size):
+    #     sx, sy = separate_collision(r1.pos, r2.pos, square_size)
+    #     print("Collision detected", sx, sy, r1.velocity[1], r2.velocity[1])
+    #     #   -- find the collision normal
+    #     d = math.sqrt(sx**2 + sy**2)
+    #     nx, ny = sx / d, sy / d
+    #     # relative velocity
+    #     vx, vy = r1.velocity[0] - (r2.velocity[0] or 0), r1.velocity[1] - (r2.velocity[1] or 0)
+    #     # penetration speed
+    #     ps = vx*nx + vy*ny
+    #     # if ps <= 0:
+    #     #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
+    #     #     print("Move the squares away from each other")
+    #     #     print(r1.velocity, r2.velocity)
+    #     #     # separate the two objects
+    #     r1.pos[0] += sx
+    #     r1.pos[1] += sy
     
 
-        # Collision handling - exchange vertical velocities
-        r1.velocity[1], r2.velocity[1] = r2.velocity[1], r1.velocity[1]
+    #     # Collision handling - exchange vertical velocities
+    #     r1.velocity[1], r2.velocity[1] = r2.velocity[1], r1.velocity[1]
         
         
    

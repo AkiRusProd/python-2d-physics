@@ -11,3 +11,4 @@ class Rectangle:
         self.velocity = [0, 0]
         self.mass = 1
         self.friction = 0.9
+        self.bounce = 0.7
