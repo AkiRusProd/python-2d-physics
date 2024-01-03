@@ -7,7 +7,7 @@ pygame.init()
 # Set up display
 width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Moving Squares with Collision and Pushing")
+pygame.display.set_caption("Falling Squares with Collision and Pushing")
 
 # Set up colors
 white = (255, 255, 255)
@@ -23,6 +23,11 @@ square_speed = 5
 
 # Set up ground properties
 ground_height = 20
+
+# Set up physics variables
+gravity = 0.5
+vertical_velocity1 = 0  # Initial vertical velocity for square 1
+vertical_velocity2 = 0  # Initial vertical velocity for square 2
 
 # Initialize movement flags
 move_left = False
@@ -65,15 +70,31 @@ while True:
     if move_down:
         square1_pos[1] += square_speed
 
+    # Update square position based on vertical velocity
+    square1_pos[1] += vertical_velocity1
+    square2_pos[1] += vertical_velocity2
+
+    # Apply gravity to both squares
+    vertical_velocity1 += gravity
+    vertical_velocity2 += gravity
+
     # Check for collision with ground
     if square1_pos[1] + square_size >= height - ground_height:
         square1_pos[1] = height - ground_height - square_size  # Set the square just above the ground
+        vertical_velocity1 = 0  # Stop the square when it hits the ground
+
+    if square2_pos[1] + square_size >= height - ground_height:
+        square2_pos[1] = height - ground_height - square_size  # Set the square just above the ground
+        vertical_velocity2 = 0  # Stop the square when it hits the ground
 
     # Check for collision with screen boundaries
     square1_pos[0] = max(0, min(square1_pos[0], width - square_size))
     square1_pos[1] = max(0, min(square1_pos[1], height - ground_height - square_size))
 
-    # Check for collision with the second square
+    square2_pos[0] = max(0, min(square2_pos[0], width - square_size))
+    square2_pos[1] = max(0, min(square2_pos[1], height - ground_height - square_size))
+
+    # Check for collision between the two squares
     if (
         square1_pos[0] < square2_pos[0] + square_size
         and square1_pos[0] + square_size > square2_pos[0]
@@ -90,6 +111,8 @@ while True:
             square1_pos[1] -= square_speed
         else:
             square1_pos[1] += square_speed
+        # Collision handling - exchange vertical velocities
+        vertical_velocity1, vertical_velocity2 = vertical_velocity2, vertical_velocity1
 
     # Draw background
     screen.fill(white)
