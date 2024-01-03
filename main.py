@@ -1,5 +1,6 @@
 import pygame
 import sys
+from object import Rectangle
 
 # https://2dengine.com/doc/collisions.html
 # Initialize Pygame
@@ -21,6 +22,20 @@ square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
 square_speed = 5
+
+r1 = Rectangle(
+    x=square1_pos[0],
+    y=square1_pos[1],
+    width = square_size,
+    height = square_size
+)
+
+r2 = Rectangle(
+    x=square2_pos[0],
+    y=square2_pos[1],
+    width = square_size,
+    height = square_size
+)
 
 # Set up ground properties
 ground_height = 20
@@ -137,37 +152,37 @@ while True:
 
     # Update square position based on movement flags
     if move_left:
-        square1_pos[0] -= square_speed
+        r1.pos[0] -= square_speed
     if move_right:
-        square1_pos[0] += square_speed
+        r1.pos[0] += square_speed
     if move_up:
-        square1_pos[1] -= square_speed * jump_force
+        r1.pos[1] -= square_speed * jump_force
     if move_down:
-        square1_pos[1] += square_speed
+        r1.pos[1] += square_speed
 
     # Update square position based on vertical velocity
-    square1_pos[1] += vertical_velocity1
-    square2_pos[1] += vertical_velocity2
+    r1.pos[1] += vertical_velocity1
+    r2.pos[1] += vertical_velocity2
 
     # Apply gravity to both squares
     vertical_velocity1 += gravity
     vertical_velocity2 += gravity
 
     # Check for collision with ground
-    if square1_pos[1] + square_size >= height - ground_height:
-        square1_pos[1] = height - ground_height - square_size  # Set the square just above the ground
+    if r1.pos[1] + square_size >= height - ground_height:
+        r1.pos[1] = height - ground_height - square_size  # Set the square just above the ground
         vertical_velocity1 = 0  # Stop the square when it hits the ground
 
-    if square2_pos[1] + square_size >= height - ground_height:
-        square2_pos[1] = height - ground_height - square_size  # Set the square just above the ground
+    if r2.pos[1] + square_size >= height - ground_height:
+        r2.pos[1] = height - ground_height - square_size  # Set the square just above the ground
         vertical_velocity2 = 0  # Stop the square when it hits the ground
 
     # Check for collision with screen boundaries
-    square1_pos[0] = max(0, min(square1_pos[0], width - square_size))
-    square1_pos[1] = max(0, min(square1_pos[1], height - ground_height - square_size))
+    r1.pos[0] = max(0, min(r1.pos[0], width - square_size))
+    r1.pos[1] = max(0, min(r1.pos[1], height - ground_height - square_size))
 
-    square2_pos[0] = max(0, min(square2_pos[0], width - square_size))
-    square2_pos[1] = max(0, min(square2_pos[1], height - ground_height - square_size))
+    r2.pos[0] = max(0, min(r2.pos[0], width - square_size))
+    r2.pos[1] = max(0, min(r2.pos[1], height - ground_height - square_size))
 
     # Check for collision between the two squares 
     # if (
@@ -177,11 +192,11 @@ while True:
     #     and square1_pos[1] + square_size > square2_pos[1]
     # ): #TODO find good solution
 
-    if check_collision(square1_pos, square2_pos, square_size):
-        sx, sy = separate_collision(square1_pos, square2_pos, square_size)
+    if check_collision(r1.pos, r2.pos, square_size):
+        sx, sy = separate_collision(r1.pos, r2.pos, square_size)
         print("Collision detected", sx, sy, vertical_velocity1, vertical_velocity2)
-        square1_pos[0] += sx
-        square1_pos[1] += sy
+        r1.pos[0] += sx
+        r1.pos[1] += sy
 
         # Collision handling - push the first square away
         # if square1_pos[0] < square2_pos[0]:
@@ -230,8 +245,8 @@ while True:
     pygame.draw.rect(screen, blue, (0, height - ground_height, width, ground_height))
 
     # Draw squares
-    pygame.draw.rect(screen, red, (square1_pos[0], square1_pos[1], square_size, square_size))
-    pygame.draw.rect(screen, green, (square2_pos[0], square2_pos[1], square_size, square_size))
+    pygame.draw.rect(screen, red, (r1.pos[0], r1.pos[1], square_size, square_size))
+    pygame.draw.rect(screen, green, (r2.pos[0], r2.pos[1], square_size, square_size))
 
     # Update display
     pygame.display.flip()
