@@ -1,5 +1,6 @@
 import pygame
 import sys
+import math
 from object import Rectangle
 
 # https://2dengine.com/doc/collisions.html
@@ -37,14 +38,19 @@ r2 = Rectangle(
     height = square_size
 )
 
+
+objects = [r1, r2]
+
 # Set up ground properties
 ground_height = 20
 
 # Set up physics variables
-jump_force = 2
+jump_force = 1.5
 gravity = 0.5
-vertical_velocity1 = 0  # Initial vertical velocity for square 1
-vertical_velocity2 = 0  # Initial vertical velocity for square 2
+r1.velocity[1] = 0  # Initial vertical velocity for square 1
+r2.velocity[1] = 0  # Initial vertical velocity for square 2
+
+r1.velocity[0] = 5  # Initial horizontal velocity for square 1
 
 # Initialize movement flags
 move_left = False
@@ -52,7 +58,7 @@ move_right = False
 move_up = False
 move_down = False
 
-
+r1.mass = 0.5
 
 def check_collision(square1_pos, square2_pos, square_size):
     # return (
@@ -124,6 +130,18 @@ def separate_collision(square1_pos, square2_pos, square_size):
     return sx, sy
     
 
+def simulate_gravity(object):
+    object.velocity[1] += gravity * object.mass
+
+def check_screen_collision(obj):
+    obj.pos[0] = max(0, min(obj.pos[0], width - obj.width))
+    obj.pos[1] = max(0, min(obj.pos[1], height - ground_height - obj.height))
+
+def check_ground_collision(obj):
+    if obj.pos[1] + obj.height >= height - ground_height:
+        obj.pos[1] = height - ground_height - obj.height # Set the square just above the ground
+        obj.velocity[1] = 0  # Stop the square when it hits the ground
+
 
 # Main game loop
 while True:
@@ -152,89 +170,54 @@ while True:
 
     # Update square position based on movement flags
     if move_left:
-        r1.pos[0] -= square_speed
+        r1.pos[0] -= r1.velocity[0]
     if move_right:
-        r1.pos[0] += square_speed
+        r1.pos[0] += r1.velocity[0]
     if move_up:
-        r1.pos[1] -= square_speed * jump_force
+        r1.pos[1] -= r1.velocity[0] * jump_force
     if move_down:
-        r1.pos[1] += square_speed
+        r1.pos[1] += r1.velocity[0]
 
     # Update square position based on vertical velocity
-    r1.pos[1] += vertical_velocity1
-    r2.pos[1] += vertical_velocity2
+    r1.pos[1] += r1.velocity[1]
+    r2.pos[1] += r2.velocity[1]
 
     # Apply gravity to both squares
-    vertical_velocity1 += gravity
-    vertical_velocity2 += gravity
+    for obj in objects:
+        simulate_gravity(obj)
 
     # Check for collision with ground
-    if r1.pos[1] + square_size >= height - ground_height:
-        r1.pos[1] = height - ground_height - square_size  # Set the square just above the ground
-        vertical_velocity1 = 0  # Stop the square when it hits the ground
-
-    if r2.pos[1] + square_size >= height - ground_height:
-        r2.pos[1] = height - ground_height - square_size  # Set the square just above the ground
-        vertical_velocity2 = 0  # Stop the square when it hits the ground
+    for obj in objects:
+        check_ground_collision(obj)
 
     # Check for collision with screen boundaries
-    r1.pos[0] = max(0, min(r1.pos[0], width - square_size))
-    r1.pos[1] = max(0, min(r1.pos[1], height - ground_height - square_size))
-
-    r2.pos[0] = max(0, min(r2.pos[0], width - square_size))
-    r2.pos[1] = max(0, min(r2.pos[1], height - ground_height - square_size))
-
-    # Check for collision between the two squares 
-    # if (
-    #     square1_pos[0] < square2_pos[0] + square_size
-    #     and square1_pos[0] + square_size > square2_pos[0]
-    #     and square1_pos[1] < square2_pos[1] + square_size
-    #     and square1_pos[1] + square_size > square2_pos[1]
-    # ): #TODO find good solution
+    for obj in objects:
+        check_screen_collision(obj)
 
     if check_collision(r1.pos, r2.pos, square_size):
         sx, sy = separate_collision(r1.pos, r2.pos, square_size)
-        print("Collision detected", sx, sy, vertical_velocity1, vertical_velocity2)
+        print("Collision detected", sx, sy, r1.velocity[1], r2.velocity[1])
+        #   -- find the collision normal
+        d = math.sqrt(sx**2 + sy**2)
+        nx, ny = sx / d, sy / d
+        # relative velocity
+        vx, vy = r1.velocity[0] - (r2.velocity[0] or 0), r1.velocity[1] - (r2.velocity[1] or 0)
+        # penetration speed
+        ps = vx*nx + vy*ny
+        # if ps <= 0:
+        #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
+        #     print("Move the squares away from each other")
+        #     print(r1.velocity, r2.velocity)
+        #     # separate the two objects
         r1.pos[0] += sx
         r1.pos[1] += sy
+     
 
-        # Collision handling - push the first square away
-        # if square1_pos[0] < square2_pos[0]:
-        #     square1_pos[0] -= square_speed
-        # else:
-        #     square1_pos[0] += square_speed
-
-        # if square1_pos[1] < square2_pos[1]:
-        #     square1_pos[1] -= square_speed
-        # else:
-        #     square1_pos[1] += square_speed
         # Collision handling - exchange vertical velocities
-        vertical_velocity1, vertical_velocity2 = vertical_velocity2, vertical_velocity1
-
-        # # Push squares away horizontally to prevent overlap
-
-        # if square1_pos[0] < square2_pos[0]:
-        #     overlap_x = (square1_pos[0] + square_size) - square2_pos[0]
-        #     if overlap_x > 0:
-        #         square1_pos[0] -= overlap_x
-        #         # square2_pos[0] += overlap_x
-        # else:
-        #     overlap_x = (square2_pos[0] + square_size) - square1_pos[0]
-        #     if overlap_x > 0:
-        #         square1_pos[0] += overlap_x
-        #         # square2_pos[0] -= overlap_x
-
-        # # Push squares away vertically to prevent overlap
-        # if square1_pos[1] < square2_pos[1]:
-        #     overlap_y = (square1_pos[1] + square_size) - square2_pos[1]
-        #     if overlap_y > 0:
-        #         square1_pos[1] += overlap_y
-        #         # square2_pos[1] += overlap_y
-        # else:
-        #     overlap_y = (square2_pos[1] + square_size) - square1_pos[1]
-        #     if overlap_y > 0:
-        #         square1_pos[1] -= overlap_y
-        #         # square2_pos[1] -= overlap_y        
+        r1.velocity[1], r2.velocity[1] = r2.velocity[1], r1.velocity[1]
+        
+        
+   
 
 
 

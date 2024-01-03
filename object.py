@@ -8,3 +8,5 @@ class Rectangle:
         self.width = width
         self.height = height
         self.pos = [x, y]
+        self.velocity = [0, 0]
+        self.mass = 1
