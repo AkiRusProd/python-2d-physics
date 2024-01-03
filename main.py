@@ -13,12 +13,16 @@ pygame.display.set_caption("Moving Squares with Collision and Pushing")
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
+blue = (0, 0, 255)
 
 # Set up square properties
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
 square_speed = 5
+
+# Set up ground properties
+ground_height = 20
 
 # Initialize movement flags
 move_left = False
@@ -61,7 +65,15 @@ while True:
     if move_down:
         square1_pos[1] += square_speed
 
-    # Check for collision
+    # Check for collision with ground
+    if square1_pos[1] + square_size >= height - ground_height:
+        square1_pos[1] = height - ground_height - square_size  # Set the square just above the ground
+
+    # Check for collision with screen boundaries
+    square1_pos[0] = max(0, min(square1_pos[0], width - square_size))
+    square1_pos[1] = max(0, min(square1_pos[1], height - ground_height - square_size))
+
+    # Check for collision with the second square
     if (
         square1_pos[0] < square2_pos[0] + square_size
         and square1_pos[0] + square_size > square2_pos[0]
@@ -81,6 +93,9 @@ while True:
 
     # Draw background
     screen.fill(white)
+
+    # Draw ground
+    pygame.draw.rect(screen, blue, (0, height - ground_height, width, ground_height))
 
     # Draw squares
     pygame.draw.rect(screen, red, (square1_pos[0], square1_pos[1], square_size, square_size))
