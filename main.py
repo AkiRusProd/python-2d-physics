@@ -22,7 +22,7 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-speed = 30
+speed = 100
 
 r1 = Rectangle(
     x=square1_pos[0],
@@ -32,12 +32,18 @@ r1 = Rectangle(
 )
 
 r2 = Rectangle(
-    x=square2_pos[0],
+    x=square1_pos[0],
     y=square2_pos[1],
     width = square_size,
     height = square_size
 )
 
+# r3 = Rectangle(
+#     x=square2_pos[0],
+#     y=square2_pos[1] + 50,
+#     width = square_size,
+#     height = square_size
+# )
 
 objects = [r1, r2]
 
@@ -231,7 +237,7 @@ while True:
                     nx, ny = sx / d, sy / d
                     # relative velocity
                     vx, vy = obj.velocity[0] - (obj2.velocity[0] or 0), obj.velocity[1] - (obj2.velocity[1] or 0)
-                    init_obj_velocity = obj.velocity.copy()
+                    # init_obj_velocity = obj.velocity.copy()
                     # penetration speed
                     ps = vx*nx + vy*ny
                     if ps <= 0:
@@ -241,6 +247,8 @@ while True:
                     #     # separate the two objects
                         obj.pos[0] += sx
                         obj.pos[1] += sy
+                    else:
+                        continue
 
                     px, py = nx*ps, ny*ps
                     # ts = vx*ny - vy*nx 
@@ -252,33 +260,16 @@ while True:
                     
                     # impulse_y = obj.mass * (obj.velocity[1] - init_obj_velocity[1])
                     # impulse_x = obj.mass * (obj.velocity[0] - init_obj_velocity[0]) 
-                   
+                    j = (1 + r) * ps
+                    j /= 1 / obj.mass + 1 / obj2.mass
+                    p = [j * nx, j * ny]
 
                     obj.velocity[0] -= (px * r + tx * f) #/ obj.mass
                     obj.velocity[1] -= (py * r + ty * f) #/ obj.mass
+
+                    # obj.velocity[0] -= (p[0] + tx * f) #/ obj.mass
+                    # obj.velocity[1] -= (p[1] + ty * f) #/ obj.mass
                         
-
-    # if check_collision(r1.pos, r2.pos, square_size):
-    #     sx, sy = separate_collision(r1.pos, r2.pos, square_size)
-    #     print("Collision detected", sx, sy, r1.velocity[1], r2.velocity[1])
-    #     #   -- find the collision normal
-    #     d = math.sqrt(sx**2 + sy**2)
-    #     nx, ny = sx / d, sy / d
-    #     # relative velocity
-    #     vx, vy = r1.velocity[0] - (r2.velocity[0] or 0), r1.velocity[1] - (r2.velocity[1] or 0)
-    #     # penetration speed
-    #     ps = vx*nx + vy*ny
-    #     # if ps <= 0:
-    #     #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
-    #     #     print("Move the squares away from each other")
-    #     #     print(r1.velocity, r2.velocity)
-    #     #     # separate the two objects
-    #     r1.pos[0] += sx
-    #     r1.pos[1] += sy
-    
-
-    #     # Collision handling - exchange vertical velocities
-    #     r1.velocity[1], r2.velocity[1] = r2.velocity[1], r1.velocity[1]
         
         
    
@@ -294,6 +285,7 @@ while True:
     # Draw squares
     pygame.draw.rect(screen, red, (r1.pos[0], r1.pos[1], square_size, square_size))
     pygame.draw.rect(screen, green, (r2.pos[0], r2.pos[1], square_size, square_size))
+    # pygame.draw.rect(screen, green, (r3.pos[0], r3.pos[1], square_size, square_size))
 
     # Update display
     pygame.display.flip()
