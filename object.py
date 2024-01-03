@@ -10,3 +10,4 @@ class Rectangle:
         self.pos = [x, y]
         self.velocity = [0, 0]
         self.mass = 1
+        self.friction = 0.9

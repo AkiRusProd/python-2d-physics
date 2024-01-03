@@ -22,7 +22,7 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-square_speed = 5
+speed = 50
 
 r1 = Rectangle(
     x=square1_pos[0],
@@ -45,8 +45,8 @@ objects = [r1, r2]
 ground_height = 20
 
 # Set up physics variables
-jump_force = 1.5
-gravity = 0.5
+jump_force = 100
+gravity = 9.8
 r1.velocity[1] = 0  # Initial vertical velocity for square 1
 r2.velocity[1] = 0  # Initial vertical velocity for square 2
 
@@ -58,7 +58,7 @@ move_right = False
 move_up = False
 move_down = False
 
-r1.mass = 0.5
+r1.mass = 10
 
 def check_collision(square1_pos, square2_pos, square_size):
     # return (
@@ -131,7 +131,14 @@ def separate_collision(square1_pos, square2_pos, square_size):
     
 
 def simulate_gravity(object):
-    object.velocity[1] += gravity * object.mass
+    object.velocity[1] += gravity * object.mass * dt
+
+def simulate_movement(object):
+    object.velocity[0] *= object.friction
+
+def update_position(object, dt):
+   object.pos[0] += object.velocity[0] * dt
+   object.pos[1] += object.velocity[1] * dt
 
 def check_screen_collision(obj):
     obj.pos[0] = max(0, min(obj.pos[0], width - obj.width))
@@ -141,8 +148,9 @@ def check_ground_collision(obj):
     if obj.pos[1] + obj.height >= height - ground_height:
         obj.pos[1] = height - ground_height - obj.height # Set the square just above the ground
         obj.velocity[1] = 0  # Stop the square when it hits the ground
+        simulate_movement(obj)
 
-
+dt = 1/60 # assuming 60 frames per second
 # Main game loop
 while True:
     for event in pygame.event.get():
@@ -170,21 +178,34 @@ while True:
 
     # Update square position based on movement flags
     if move_left:
-        r1.pos[0] -= r1.velocity[0]
+        # r1.pos[0] -= r1.velocity[0]
+        r1.velocity[0] -= speed if r1.velocity[1] == 0 else 0
     if move_right:
-        r1.pos[0] += r1.velocity[0]
+        # r1.pos[0] += r1.velocity[0]
+        r1.velocity[0] += speed if r1.velocity[1] == 0 else 0
     if move_up:
-        r1.pos[1] -= r1.velocity[0] * jump_force
+        # r1.pos[1] -= r1.velocity[0] * jump_force
+        r1.velocity[1] = -jump_force if r1.velocity[1] == 0 else r1.velocity[1]
+        # r1.velocity[1] = -jump_force
+        # r1.velocity[1] -= jump_force
     if move_down:
-        r1.pos[1] += r1.velocity[0]
+        # r1.pos[1] += r1.velocity[0]
+        r1.velocity[1] = jump_force
+    print(r1.velocity)
 
     # Update square position based on vertical velocity
-    r1.pos[1] += r1.velocity[1]
-    r2.pos[1] += r2.velocity[1]
+    # r1.pos[1] += r1.velocity[1]
+    # r2.pos[1] += r2.velocity[1]
+    for obj in objects:
+        update_position(obj, dt)
 
     # Apply gravity to both squares
     for obj in objects:
         simulate_gravity(obj)
+
+
+    # update_position(r1, dt)
+ 
 
     # Check for collision with ground
     for obj in objects:
@@ -211,7 +232,7 @@ while True:
         #     # separate the two objects
         r1.pos[0] += sx
         r1.pos[1] += sy
-     
+    
 
         # Collision handling - exchange vertical velocities
         r1.velocity[1], r2.velocity[1] = r2.velocity[1], r1.velocity[1]
