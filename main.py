@@ -26,7 +26,7 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-speed = 70
+speed = 40
 
 r1 = Rectangle(
     x=0,
@@ -90,7 +90,7 @@ move_up = False
 move_down = False
 
 r1.mass = 30
-r2.mass = 70
+r2.mass = 300
 r1.type = "dynamic"
 r2.type = "dynamic"
 
@@ -289,14 +289,14 @@ while True:
                     
                     
                     # penetration speed
-                    ps = vx*nx + vy*ny
+                    ps = vx*nx + vy*ny #relative velocity * normal
                     px, py = nx*ps, ny*ps
                     if ps <= 0:
                     #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
                     #     print("Move the squares away from each other")
                     #     print(r1.velocity, r2.velocity)
-                        sx = max(sx - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.5 * nx * 1/obj.mass
-                        sy = max(sy - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.5 * ny * 1/obj2.mass
+                        sx = max(sx - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.8 * nx * 1/obj.mass
+                        sy = max(sy - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.8 * ny * 1/obj2.mass
                     #     # separate the two objects
                         if obj.type == "dynamic":
                             obj.pos[0] += sx
@@ -312,7 +312,7 @@ while True:
                     # tx, ty = ny*ts, -nx*ts
                     tx, ty = vx - px, vy - py
                     r = 1 + max(obj.bounce, obj2.bounce)
-                    f = 1 + max(obj.friction, obj2.friction)
+                    f = min(obj.friction, obj2.friction)
 
                     # if obj.type == "dynamic":
                     #     obj.velocity[0] -= (px * r + tx * f)
@@ -330,6 +330,10 @@ while True:
 
                     px /= 1 / obj.mass + 1 / obj2.mass
                     py /= 1 / obj.mass + 1 / obj2.mass
+
+                    tx /= 1 / obj.mass + 1 / obj2.mass
+                    ty /= 1 / obj.mass + 1 / obj2.mass
+
                     if obj.type == "dynamic":
                         obj.velocity[0] -= (px * r + tx * f) / obj.mass
                         obj.velocity[1] -= (py * r + ty * f) / obj.mass
