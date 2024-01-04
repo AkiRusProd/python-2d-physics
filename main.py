@@ -6,6 +6,7 @@ from object import Rectangle
 # https://2dengine.com/doc/collisions.html
 # https://habr.com/en/articles/336908/
 # https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
+# https://habr.com/en/articles/509568/
 
 # Initialize Pygame
 pygame.init()
@@ -25,7 +26,7 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-speed = 50
+speed = 70
 
 r1 = Rectangle(
     x=square1_pos[0],
@@ -54,7 +55,7 @@ objects = [r1, r2]
 ground_height = 20
 
 # Set up physics variables
-jump_force = 200
+jump_force = 230
 gravity = 9.8
 r1.velocity[1] = 0  # Initial vertical velocity for square 1
 r2.velocity[1] = 0  # Initial vertical velocity for square 2
@@ -67,74 +68,46 @@ move_right = False
 move_up = False
 move_down = False
 
-r1.mass = 10
-r2.mass = 5
+r1.mass = 50
+r2.mass = 30
 
 # r2.velocity[0] = -5
 
-def check_collision(square1_pos, square2_pos, square_size):
+def check_collision(obj1, obj2):
     # return (
-    #     square1_pos[0] < square2_pos[0] + square_size
-    #     and square1_pos[0] + square_size > square2_pos[0]
-    #     and square1_pos[1] < square2_pos[1] + square_size
-    #     and square1_pos[1] + square_size > square2_pos[1]
+    #     obj1.pos[0] < obj2.pos[0] + square_size
+    #     and obj1.pos[0] + square_size > obj2.pos[0]
+    #     and obj1.pos[1] < obj2.pos[1] + square_size
+    #     and obj1.pos[1] + square_size > obj2.pos[1]
     # )
     # Another solution:
     # -- distance between the rects
-    # local dx, dy = a.x - b.x, a.y - b.y
-    # local adx = math.abs(dx)
-    # local ady = math.abs(dy)
-    # -- sum of the extents
-    # local shw, shh = a.hw + b.hw, a.hh + b.hh
-    # if adx >= shw or ady >= shh then
-    #     -- no intersection
-    #     return
-    # end
-    # -- intersection
-
-    dx, dy = square1_pos[0] - square2_pos[0], square1_pos[1] - square2_pos[1]
+    dx, dy = obj1.pos[0] - obj2.pos[0], obj1.pos[1] - obj2.pos[1]
     adx = abs(dx)
     ady = abs(dy)
-    shw, shh = square_size, square_size
+    # -- sum of the extents
+    shw, shh = obj1.width // 2 + obj2.width //2, obj1.height // 2 + obj2.height // 2
     if adx >= shw or ady >= shh:
         # no intersection
         return False
     # intersection
     return True
 
-def separate_collision(square1_pos, square2_pos, square_size):
-    #   -- shortest separation
-    #   local sx, sy = shw - adx, shh - ady
-    #   -- ignore longer axis
-    #   if sx < sy then
-    #     if sx > 0 then
-    #       sy = 0
-    #     end
-    #   else
-    #     if sy > 0 then
-    #       sx = 0
-    #     end
-    #   end
-    #   -- correct sign
-    #   if dx < 0 then
-    #     sx = -sx
-    #   end
-    #   if dy < 0 then
-    #     sy = -sy
-    #   end
-    #   return sx, sy
-    # end
-    dx, dy = square1_pos[0] - square2_pos[0], square1_pos[1] - square2_pos[1]
+def separate_collision(obj1, obj2):
+    dx, dy = obj1.pos[0] - obj2.pos[0], obj1.pos[1] - obj2.pos[1]
     adx = abs(dx)
     ady = abs(dy)
-    shw, shh = square_size, square_size
+    #   -- shortest separation
+    shw, shh = obj1.width // 2 + obj2.width //2, obj1.height // 2 + obj2.height // 2
     sx, sy = shw - adx, shh - ady
+    #   -- ignore longer axis
     if sx < sy:
         if sx > 0:
             sy = 0
     else:
         if sy > 0:
             sx = 0
+    #   -- correct sign
     if dx < 0:
         sx = -sx
     if dy < 0:
@@ -231,10 +204,9 @@ while True:
     for obj in objects:
         for obj2 in objects:
             if obj != obj2:
-                # print(obj, obj2)
-                if check_collision(obj.pos, obj2.pos, obj.width):
-                    sx, sy = separate_collision(obj.pos, obj2.pos, square_size)
-                    # print("Collision detected", sx, sy, obj.velocity[1], obj2.velocity[1])
+                if check_collision(obj, obj2):
+                    sx, sy = separate_collision(obj, obj2)
+                
                     #   -- find the collision normal
                     d = math.sqrt(sx**2 + sy**2)
                     nx, ny = sx / d, sy / d
