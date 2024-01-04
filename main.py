@@ -186,9 +186,6 @@ def simulate_gravity(object):
     if object.type == "dynamic":
         object.velocity[1] += gravity * object.mass * dt
 
-# def simulate_movement(object):
-#     object.velocity[0] *= object.friction
-
 def update_position(object, dt):
    if object.type == "dynamic":
         object.pos[0] += object.velocity[0] * dt
@@ -199,16 +196,18 @@ def check_screen_collision(obj):
         obj.pos[0] = max(0, min(obj.pos[0], width - obj.width))
         # obj.pos[1] = max(0, min(obj.pos[1], height - ground_height - obj.height))
 
-# def check_ground_collision(obj):
-#     if obj.pos[1] + obj.height >= height - ground_height:
-#         obj.pos[1] = height - ground_height - obj.height # Set the square just above the ground
-#         obj.velocity[1] = 0  # Stop the square when it hits the ground
-#         simulate_movement(obj)
 
 
-dt = 1/60 # assuming 60 frames per second
+fps = 360
+dt = 1/fps # assuming frames per second
+        
+# clock = pygame.time.Clock()
+
+
+
 # Main game loop
 while True:
+    # dt = clock.tick(fps) / 1000
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -260,13 +259,6 @@ while True:
         simulate_gravity(obj)
 
 
-    # update_position(r1, dt)
- 
-
-    # Check for collision with ground
-    # for obj in objects:
-    #     check_ground_collision(obj)
-
     # Check for collision with screen boundaries
     for obj in objects:
         check_screen_collision(obj)
@@ -276,8 +268,8 @@ while True:
             if obj != obj2:
                 # print(obj.type, obj2.type)
                 if aabb_vs_aabb_collision(obj, obj2):
-                    print("collision")
-                    print(obj.type, obj2.type)
+                    # print("collision")
+                    # print(obj.type, obj2.type)
                     sx, sy = separate_collision(obj, obj2)
     
                     # print(sx, sy)
@@ -373,4 +365,4 @@ while True:
     pygame.display.flip()
 
     # Control frame rate
-    pygame.time.Clock().tick(60)
+    pygame.time.Clock().tick(fps)
