@@ -7,6 +7,7 @@ from object import Rectangle, Circle
 # https://habr.com/en/articles/336908/
 # https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
 # https://habr.com/en/articles/509568/
+# https://www.jeffreythompson.org/collision-detection/table_of_contents.php
 
 # Initialize Pygame
 pygame.init()
@@ -26,7 +27,9 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-speed = 40
+speed = 20
+jump_force = 10
+
 
 r1 = Rectangle(
     x=0,
@@ -47,6 +50,15 @@ r2 = Rectangle(
 #     y=square1_pos[1],
 #     radius = square_size
 # )
+# c1.mass = 50
+
+# c2 = Circle(
+#     x=square1_pos[0] + 100,
+#     y=square1_pos[1] - 100,
+#     radius = square_size
+# )
+# c2.mass = 50
+
 
 
 
@@ -76,7 +88,7 @@ ground.bounce = 0
 
 objects = [r1, r2, ground]
 # Set up physics variables
-jump_force = 230
+
 gravity = 9.8
 r1.velocity[1] = 0  # Initial vertical velocity for square 1
 r2.velocity[1] = 0  # Initial vertical velocity for square 2
@@ -93,6 +105,7 @@ r1.mass = 30
 r2.mass = 300
 r1.type = "dynamic"
 r2.type = "dynamic"
+# c2.type = "static"
 
 # r2.velocity[0] = -5
 
@@ -154,7 +167,52 @@ def aabb_vs_circle_collision(obj, obj2):
     # Check if the distance is less than or equal to the circle's radius
     distance_squared = distance_x**2 + distance_y**2
     return distance_squared <= circle[2]**2
+
+def circle_vs_circle_collision(obj1, obj2):
+    if not hasattr(obj1, 'radius') or not hasattr(obj2, 'radius'): 
+        return False
+
+    # obj1_cpos = (obj1.pos[0] + obj1.radius / 2, obj1.pos[1] + obj1.radius / 2)
+    # obj2_cpos = (obj2.pos[0] + obj2.radius / 2, obj2.pos[1] + obj2.radius / 2)
+    obj1_cpos = (obj1.pos[0], obj1.pos[1])
+    obj2_cpos = (obj2.pos[0], obj2.pos[1])
+
+    c_dist = ((obj1_cpos[0] - obj2_cpos[0])**2 + (obj1_cpos[1] - obj2_cpos[1])**2)**0.5
+
+    if c_dist >= obj1.radius + obj2.radius:
+        return False
     
+    print("collision!")
+     
+
+    nx, ny = obj1_cpos[0] - obj2_cpos[0], obj1_cpos[1] - obj2_cpos[1]
+
+    s = obj1.radius + obj2.radius - c_dist
+    vx, vy = obj.velocity[0] - (obj2.velocity[0] or 0), obj.velocity[1] - (obj2.velocity[1] or 0)
+                    
+                    
+    # penetration speed
+    ps = vx*nx + vy*ny #relative velocity * normal
+
+    if ps > 0:
+        return
+    sx = max(s - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.8 * nx * 1/obj.mass
+    sy = max(s - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.8 * ny * 1/obj2.mass
+
+    # if obj1.type == "dynamic":
+    #     obj1.pos[0] += s * nx / 2
+    #     obj1.pos[1] += s * ny / 2
+    # elif obj1.type == "dynamic":
+    #     obj1.pos[0] -= s * nx / 2
+    #     obj1.pos[1] -= s * ny / 2
+
+    if obj1.type == "dynamic":
+        obj1.pos[0] += sx
+        obj1.pos[1] += sy
+    elif obj1.type == "dynamic":
+        obj1.pos[0] -= sx
+        obj1.pos[1] -= sy
+   
 
 def separate_collision(obj1, obj2):
     obj1_cpos = (obj1.pos[0] + obj1.width / 2, obj1.pos[1] + obj1.height / 2)
@@ -193,7 +251,10 @@ def update_position(object, dt):
 
 def check_screen_collision(obj):
     if obj.type == "dynamic":
-        obj.pos[0] = max(0, min(obj.pos[0], width - obj.width))
+        if hasattr(obj, 'width'):
+            obj.pos[0] = max(0, min(obj.pos[0], width - obj.width))
+        elif hasattr(obj, 'radius'):
+            obj.pos[0] = max(0, min(obj.pos[0], width - obj.radius))
         # obj.pos[1] = max(0, min(obj.pos[1], height - ground_height - obj.height))
 
 
@@ -203,7 +264,7 @@ dt = 1/fps # assuming frames per second
         
 # clock = pygame.time.Clock()
 
-
+epsilon = 0.001 
 
 # Main game loop
 while True:
@@ -234,19 +295,19 @@ while True:
     # Update square position based on movement flags
     if move_left:
         # r1.pos[0] -= r1.velocity[0]
-        r1.velocity[0] -= speed #if r1.velocity[1] == 0 else 0
+        r1.velocity[0] -= speed #if abs(r1.velocity[1]) < epsilon else 0
     if move_right:
         # r1.pos[0] += r1.velocity[0]
-        r1.velocity[0] += speed #if r1.velocity[1] == 0 else 0
+        r1.velocity[0] += speed #if abs(r1.velocity[1]) < epsilon else 0
     if move_up:
         # r1.pos[1] -= r1.velocity[0] * jump_force
-        r1.velocity[1] = -jump_force #if r1.velocity[1] == 0 else r1.velocity[1]
+        r1.velocity[1] -= jump_force #if abs(r1.velocity[1]) < 1 else 0
         # r1.velocity[1] = -jump_force
         # r1.velocity[1] -= jump_force
     if move_down:
         # r1.pos[1] += r1.velocity[0]
-        r1.velocity[1] = jump_force
-    print(r1.velocity)
+        r1.velocity[1] += jump_force
+    # print(r1.velocity)
 
     # Update square position based on vertical velocity
     # r1.pos[1] += r1.velocity[1]
@@ -340,8 +401,9 @@ while True:
                     # obj2.velocity[0] += (px * (1 + r) - tx * f) * obj2.mass / (obj.mass + obj2.mass)
                     # obj2.velocity[1] += (py * (1 + r) - ty * f) * obj2.mass / (obj.mass + obj2.mass)
 
-                if aabb_vs_circle_collision(obj, obj2):
-                    print("collision!")
+                # circle_vs_circle_collision(obj, obj2)
+                # aabb_vs_circle_collision(obj, obj2)
+                 
 
         
         
@@ -359,6 +421,7 @@ while True:
     pygame.draw.rect(screen, red, (r1.pos[0], r1.pos[1], square_size, square_size))
     pygame.draw.rect(screen, green, (r2.pos[0], r2.pos[1], r2.width, r2.height))
     # pygame.draw.circle(screen, blue, (c1.pos[0], c1.pos[1]), square_size) # Here <<<
+    # pygame.draw.circle(screen, blue, (c2.pos[0], c2.pos[1]), square_size)
     # pygame.draw.rect(screen, green, (r3.pos[0], r3.pos[1], square_size, square_size))
 
     # Update display

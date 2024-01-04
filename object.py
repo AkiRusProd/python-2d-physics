@@ -12,7 +12,7 @@ class Rectangle:
         self.velocity = [0, 0]
         self.mass = 1
         self.friction = 0.3
-        self.bounce = 0.7
+        self.bounce = 0.5
         self.type = "dynamic"
 
 
@@ -22,6 +22,6 @@ class Circle:
         self.pos = [x, y]
         self.velocity = [0, 0]
         self.mass = 1
-        self.friction = 0.9
+        self.friction = 0.3
         self.bounce = 0.3
         self.type = "dynamic"
