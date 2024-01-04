@@ -4,6 +4,9 @@ import math
 from object import Rectangle
 
 # https://2dengine.com/doc/collisions.html
+# https://habr.com/en/articles/336908/
+# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
+
 # Initialize Pygame
 pygame.init()
 
@@ -22,7 +25,7 @@ blue = (0, 0, 255)
 square_size = 50
 square1_pos = [width // 4, height // 2 - square_size // 2]
 square2_pos = [3 * width // 4 - square_size, height // 2 - square_size // 2]
-speed = 100
+speed = 50
 
 r1 = Rectangle(
     x=square1_pos[0],
@@ -51,7 +54,7 @@ objects = [r1, r2]
 ground_height = 20
 
 # Set up physics variables
-jump_force = 150
+jump_force = 200
 gravity = 9.8
 r1.velocity[1] = 0  # Initial vertical velocity for square 1
 r2.velocity[1] = 0  # Initial vertical velocity for square 2
@@ -64,10 +67,10 @@ move_right = False
 move_up = False
 move_down = False
 
-r1.mass = 20
+r1.mass = 10
 r2.mass = 5
 
-r2.velocity[0] = -5
+# r2.velocity[0] = -5
 
 def check_collision(square1_pos, square2_pos, square_size):
     # return (
@@ -237,7 +240,7 @@ while True:
                     nx, ny = sx / d, sy / d
                     # relative velocity
                     vx, vy = obj.velocity[0] - (obj2.velocity[0] or 0), obj.velocity[1] - (obj2.velocity[1] or 0)
-                    # init_obj_velocity = obj.velocity.copy()
+                    
                     # penetration speed
                     ps = vx*nx + vy*ny
                     if ps <= 0:
@@ -247,6 +250,9 @@ while True:
                     #     # separate the two objects
                         obj.pos[0] += sx
                         obj.pos[1] += sy
+
+                        obj2.pos[0] -= sx
+                        obj2.pos[1] -= sy
                     else:
                         continue
 
@@ -256,20 +262,31 @@ while True:
                     tx, ty = vx - px, vy - py
                     r = 1 + max(obj.bounce, obj2.bounce)
                     f = 1 + max(obj.friction, obj2.friction)
-                    
-                    
-                    # impulse_y = obj.mass * (obj.velocity[1] - init_obj_velocity[1])
-                    # impulse_x = obj.mass * (obj.velocity[0] - init_obj_velocity[0]) 
-                    j = (1 + r) * ps
-                    j /= 1 / obj.mass + 1 / obj2.mass
-                    p = [j * nx, j * ny]
 
-                    obj.velocity[0] -= (px * r + tx * f) #/ obj.mass
-                    obj.velocity[1] -= (py * r + ty * f) #/ obj.mass
+                    # obj.velocity[0] -= (px * r + tx * f)
+                    # obj.velocity[1] -= (py * r + ty * f)
+                    # obj2.velocity[0] += (px * r - tx * f)
+                    # obj2.velocity[1] += (py * r - ty * f)
+                    
+                
+                    # j = (1 + r) * ps
+                    # j /= 1 / obj.mass + 1 / obj2.mass
+                    # p = [j * nx, j * ny]
 
-                    # obj.velocity[0] -= (p[0] + tx * f) #/ obj.mass
-                    # obj.velocity[1] -= (p[1] + ty * f) #/ obj.mass
-                        
+                    px /= 1 / obj.mass + 1 / obj2.mass
+                    py /= 1 / obj.mass + 1 / obj2.mass
+                    obj.velocity[0] -= (px * (1 + r) + tx * f) / obj.mass
+                    obj.velocity[1] -= (py * (1 + r) + ty * f) / obj.mass
+                    obj2.velocity[0] += (px * (1 + r) - tx * f) / obj2.mass
+                    obj2.velocity[1] += (py * (1 + r) - ty * f) / obj2.mass
+
+                   
+                    
+                    # obj.velocity[0] -= (px * (1 + r) + tx * f) * obj.mass / (obj.mass + obj2.mass)
+                    # obj.velocity[1] -= (py * (1 + r) + ty * f) * obj2.mass / (obj.mass + obj2.mass)
+                    # obj2.velocity[0] += (px * (1 + r) - tx * f) * obj2.mass / (obj.mass + obj2.mass)
+                    # obj2.velocity[1] += (py * (1 + r) - ty * f) * obj2.mass / (obj.mass + obj2.mass)
+
         
         
    
