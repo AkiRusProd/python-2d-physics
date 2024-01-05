@@ -3,7 +3,7 @@ import sys
 import math
 from body import Rectangle, Circle
 from vector import Vector2D
-from collision import aabb_collision
+from collision import aabbs_collision, circles_collision
 
 # https://2dengine.com/doc/collisions.html
 # https://habr.com/en/articles/336908/
@@ -83,7 +83,7 @@ ground = Rectangle(
     width = width,
     height = ground_height
 )
-ground.body_type = "static"
+ground.is_static = True
 ground.friction = 0.9
 ground.mass = float("inf")
 ground.bounce = 0
@@ -107,49 +107,13 @@ r1.mass = 300
 r2.mass = 300
 c1.mass = 30
 c2.mass = 120 #float("inf")
-r1.body_type = "dynamic"
-r2.body_type = "dynamic"
-c1.body_type = "dynamic"
-c2.body_type = "dynamic"
+r1.is_static = False
+r2.is_static = False
+c1.is_static = False
+c2.is_static = False
 
 # r2.velocity[0] = -5
 
-
-
-def aabb_vs_aabb_collision(obj1, obj2):
-    if hasattr(obj1, 'radius') or hasattr(obj2, 'radius'):
-        return False
-    # return (
-    #     obj1.pos[0] < obj2.pos[0] + obj2.width
-    #     and obj1.pos[0] + obj1.width > obj2.pos[0]
-    #     and obj1.pos[1] < obj2.pos[1] + obj2.height
-    #     and obj1.pos[1] + obj1.height > obj2.pos[1]
-    # )
-    # Another solution:
-    # -- distance between the rects
-    
-    # obj1_cpos = (obj1.pos[0] + obj1.width / 2, obj1.pos[1] + obj1.height / 2)
-    # obj2_cpos = (obj2.pos[0] + obj2.width / 2, obj2.pos[1] + obj2.height / 2)
-
-    # # dx, dy = obj1.pos[0] - obj2.pos[0], obj1.pos[1] - obj2.pos[1]
-    # dx, dy = obj1_cpos[0] - obj2_cpos[0], obj1_cpos[1] - obj2_cpos[1]
-    # adx = abs(dx)
-    # ady = abs(dy)
-    d = obj1.cpos - obj2.cpos
-
-    adx = abs(d.x)
-    ady = abs(d.y)
-
-    # -- sum of the extents
-    shw, shh = obj1.width / 2 + obj2.width /2, obj1.height / 2 + obj2.height / 2
-    
-    if adx >= shw or ady >= shh:
-        # no intersection
-        return False
-    else:
-    # intersection
-        # print(f"{shw=}, {shh=}, {adx=}, {ady=}, {adx >= shw}, {ady >= shh}")
-        return True
 
 
 def project_vertices(vertices, axis):
@@ -294,10 +258,10 @@ def aabb_vs_circle_collision(aabb, circle):
         normal = [-normal[0], -normal[1]]
 
     
-    # if aabb.body_type == "dynamic":
+    # if aabb.is_static == False:
     #     aabb.pos[0] += normal[0] * depth
     #     aabb.pos[1] += normal[1] * depth
-    # if circle.body_type == "dynamic":
+    # if circle.is_static == False:
     #     circle.pos[0] -= normal[0] * depth
     #     circle.pos[1] -= normal[1] * depth
         
@@ -334,12 +298,12 @@ def aabb_vs_circle_collision(aabb, circle):
     if ps > 0:
         return
     
-    if aabb.body_type == "dynamic":
+    if aabb.is_static == False:
         aabb.pos[0] += sx / 2
         aabb.pos[1] += sy / 2
         # aabb.update_vertices()
         # aabb.move(sx, sy)
-    if circle.body_type == "dynamic":
+    if circle.is_static == False:
         circle.pos[0] -= sx / 2
         circle.pos[1] -= sy / 2
 
@@ -358,119 +322,26 @@ def aabb_vs_circle_collision(aabb, circle):
         # print("ground", px, py, tx, ty, r, f)
     # print( px, py, tx, ty, r, f)
 
-    if aabb.body_type == "dynamic":
+    if aabb.is_static == False:
         aabb.velocity[0] -= (px * r + tx * f) / aabb.mass
         aabb.velocity[1] -= (py * r + ty * f) / aabb.mass
-    if circle.body_type == "dynamic":
+    if circle.is_static == False:
         circle.velocity[0] += (px * r + tx * f) / circle.mass
         circle.velocity[1] += (py * r + ty * f) / circle.mass
-
-
-
-
-def circle_vs_circle_collision(obj1, obj2):
-    if not hasattr(obj1, 'radius') or not hasattr(obj2, 'radius'): 
-        return False
-
-    c_dist = distance(obj1.pos, obj2.pos)
-
-    if c_dist >= obj1.radius + obj2.radius:
-        return False
-    
-    print("collision!")
-     
-
-    # nx, ny = obj1_cpos[0] - obj2_cpos[0], obj1_cpos[1] - obj2_cpos[1]
-    nx, ny = normalize([obj1.pos[0] - obj2.pos[0], obj1.pos[1] - obj2.pos[1]])
-
-    s = obj1.radius + obj2.radius - c_dist
-    vx, vy = obj1.velocity[0] - (obj2.velocity[0] or 0), obj1.velocity[1] - (obj2.velocity[1] or 0)
-                    
-                    
-    # penetration speed
-    ps = vx*nx + vy*ny #relative velocity * normal
-
-    if ps > 0:
-        return
-    sx = max(s - 0.01, 0) / (1 / obj1.mass + 1 / obj2.mass) * 0.8 * nx * 1/obj1.mass
-    sy = max(s - 0.01, 0) / (1 / obj1.mass + 1 / obj2.mass) * 0.8 * ny * 1/obj2.mass
-
-    # if obj1.body_type == "dynamic":
-    #     obj1.pos[0] += s * nx / 2
-    #     obj1.pos[1] += s * ny / 2
-    # if obj2.body_type == "dynamic":
-    #     obj2.pos[0] -= s * nx / 2
-    #     obj2.pos[1] -= s * ny / 2
-
-    print(obj1.name, obj1.velocity)
-    print(obj2.name, obj2.velocity)
-
-    if obj1.body_type == "dynamic":
-        obj1.pos[0] += sx
-        obj1.pos[1] += sy
-    if obj2.body_type == "dynamic":
-        obj2.pos[0] -= sx
-        obj2.pos[1] -= sy
-
-    px, py = nx*ps, ny*ps
-    tx, ty = vx - px, vy - py
-    r = 1 + max(obj1.bounce, obj2.bounce)
-    f = min(obj1.friction, obj2.friction)
-
-    px /= 1 / obj1.mass + 1 / obj2.mass
-    py /= 1 / obj1.mass + 1 / obj2.mass
-
-    tx /= 1 / obj1.mass + 1 / obj2.mass
-    ty /= 1 / obj1.mass + 1 / obj2.mass
-
-    if obj1.body_type == "dynamic":
-        obj1.velocity[0] -= (px * r + tx * f) / obj1.mass
-        obj1.velocity[1] -= (py * r + ty * f) / obj1.mass
-    if obj2.body_type == "dynamic":
-        obj2.velocity[0] += (px * r + tx * f) / obj2.mass
-        obj2.velocity[1] += (py * r + ty * f) / obj2.mass
-
-
-def separate_collision(obj1, obj2):
-    # obj1_cpos = (obj1.pos[0] + obj1.width / 2, obj1.pos[1] + obj1.height / 2)
-    # obj2_cpos = (obj2.pos[0] + obj2.width / 2, obj2.pos[1] + obj2.height / 2)
-    obj1_cpos = obj1.pos
-    obj2_cpos = obj2.pos
-
-    # dx, dy = obj1.pos[0] - obj2.pos[0], obj1.pos[1] - obj2.pos[1]
-    dx, dy = obj1_cpos[0] - obj2_cpos[0], obj1_cpos[1] - obj2_cpos[1]
-    adx = abs(dx)
-    ady = abs(dy)
-    #   -- shortest separation
-    shw, shh = obj1.width / 2 + obj2.width / 2, obj1.height / 2 + obj2.height / 2
-    sx, sy = shw - adx, shh - ady
-    #   -- ignore longer axis
-    if sx < sy:
-        if sx > 0:
-            sy = 0
-    else:
-        if sy > 0:
-            sx = 0
-    #   -- correct sign
-    if dx < 0:
-        sx = -sx
-    if dy < 0:
-        sy = -sy
-    return sx, sy
     
 
 def simulate_gravity(object):
-    if object.body_type == "dynamic": #and object.name != "circle1":
+    if object.is_static == False: #and object.name != "circle1":
         object.velocity[1] += gravity * object.mass * dt
 
 def update_position(object, dt):
-   if object.body_type == "dynamic":
+   if object.is_static == False:
         object.pos[0] += object.velocity[0] * dt
         object.pos[1] += object.velocity[1] * dt
        
 
 def check_screen_collision(obj):
-    if obj.body_type == "dynamic":
+    if obj.is_static == False:
         if hasattr(obj, 'width'):
             obj.pos[0] = max(0 + obj.width / 2, min(obj.pos[0], width - obj.width / 2))
         elif hasattr(obj, 'radius'):
@@ -536,89 +407,14 @@ while True:
     for obj in objects:
         for obj2 in objects:
             if obj != obj2:
-                if not hasattr(obj, 'radius') or not hasattr(obj2, 'radius'):
-                    aabb_collision(obj, obj2)
-                # print(obj.body_type, obj2.body_type)
-                # if aabb_vs_aabb_collision(obj, obj2):
-                #     # print("collision")
-                #     # print(obj.body_type, obj2.body_type)
-                #     sx, sy = separate_collision(obj, obj2)
-    
-                #     # print(sx, sy)
-                #     #   -- find the collision normal
-                #     d = math.sqrt(sx**2 + sy**2)
-                #     nx, ny = sx / d, sy / d
-                #     # relative velocity
-                #     vx, vy = obj.velocity[0] - (obj2.velocity[0] or 0), obj.velocity[1] - (obj2.velocity[1] or 0)
-                    
-                    
-                #     # penetration speed
-                #     ps = vx*nx + vy*ny #relative velocity * normal
-                #     px, py = nx*ps, ny*ps
-                #     if ps <= 0:
-                #     #     #This check is very important; This ensures that you only resolve collision if the objects are moving towards each othe
-                #     #     print("Move the squares away from each other")
-                #     #     print(r1.velocity, r2.velocity)
-                #         # sx = max(sx - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.8 * nx * 1/obj.mass
-                #         # sy = max(sy - 0.01, 0) / (1 / obj.mass + 1 / obj2.mass) * 0.8 * ny * 1/obj2.mass
-                #     #     # separate the two objects
-                #         if obj.body_type == "dynamic":
-                #             obj.pos[0] += sx
-                #             obj.pos[1] += sy
-                #         if obj2.body_type == "dynamic":
-                #             obj2.pos[0] -= sx
-                #             obj2.pos[1] -= sy
-                #     else:
-                #         continue
-
-                    
-                #     # ts = vx*ny - vy*nx 
-                #     # tx, ty = ny*ts, -nx*ts
-                #     tx, ty = vx - px, vy - py
-                #     r = 1 + max(obj.bounce, obj2.bounce)
-                #     f = min(obj.friction, obj2.friction)
-
-                #     # if obj.body_type == "dynamic":
-                #     #     obj.velocity[0] -= (px * r + tx * f)
-                #     #     obj.velocity[1] -= (py * r + ty * f)
-                #     # if obj2.body_type == "dynamic":
-                #     #     obj2.velocity[0] += (px * r - tx * f)
-                #     #     obj2.velocity[1] += (py * r - ty * f)
-                    
-                
-                #     # j = (1 + r) * ps
-                #     # j /= 1 / obj.mass + 1 / obj2.mass
-                #     # p = [j * nx, j * ny]
-
-                #     # print(obj.mass, obj2.mass, obj.body_type, obj2.body_type)
-
-                #     px /= 1 / obj.mass + 1 / obj2.mass
-                #     py /= 1 / obj.mass + 1 / obj2.mass
-
-                #     tx /= 1 / obj.mass + 1 / obj2.mass
-                #     ty /= 1 / obj.mass + 1 / obj2.mass
-
-                #     if obj.body_type == "dynamic":
-                #         obj.velocity[0] -= (px * r + tx * f) / obj.mass
-                #         obj.velocity[1] -= (py * r + ty * f) / obj.mass
-                #     if obj2.body_type == "dynamic":
-                #         obj2.velocity[0] += (px * r + tx * f) / obj2.mass
-                #         obj2.velocity[1] += (py * r + ty * f) / obj2.mass
-
-                #     # if obj.name == "red":
-                #     #     print("red", px, py, tx, ty, r, f)
-                    
-                #     # obj.velocity[0] -= (px * (1 + r) + tx * f) * obj.mass / (obj.mass + obj2.mass)
-                #     # obj.velocity[1] -= (py * (1 + r) + ty * f) * obj2.mass / (obj.mass + obj2.mass)
-                #     # obj2.velocity[0] += (px * (1 + r) - tx * f) * obj2.mass / (obj.mass + obj2.mass)
-                #     # obj2.velocity[1] += (py * (1 + r) - ty * f) * obj2.mass / (obj.mass + obj2.mass)
-
-                circle_vs_circle_collision(obj, obj2)
-                # aabb_vs_circle_collision(obj, obj2)
-                if hasattr(obj, 'radius') and not hasattr(obj2, 'radius'):
-                    aabb_vs_circle_collision(obj2, obj)
-                if not hasattr(obj, 'radius') and hasattr(obj2, 'radius'):
+                if obj.shape_type == "Rectangle" and obj2.shape_type == "Rectangle":
+                    aabbs_collision(obj, obj2)
+                elif obj.shape_type == "Circle" and obj2.shape_type == "Circle":
+                    circles_collision(obj, obj2)
+                elif obj.shape_type == "Rectangle" and obj2.shape_type == "Circle":
                     aabb_vs_circle_collision(obj, obj2)
+                # if not hasattr(obj, 'radius') and hasattr(obj2, 'radius'):
+                #     aabb_vs_circle_collision(obj, obj2)
 
         
         
@@ -631,13 +427,11 @@ while True:
 
     # Draw ground
     pygame.draw.rect(screen, blue, (ground.pos[0] - ground.width / 2, ground.pos[1] - ground.height / 2, width, ground_height))
-    # print(ground.pos[0], ground.pos[1], width, ground_height)
     # Draw squares
     pygame.draw.rect(screen, red, (r1.pos[0] - r1.width / 2, r1.pos[1] - r1.height / 2, square_size, square_size))
     pygame.draw.rect(screen, green, (r2.pos[0]- r2.width / 2, r2.pos[1] - r2.height / 2, r2.width, r2.height))
     pygame.draw.circle(screen, blue, (c1.pos[0], c1.pos[1]), c1.radius)
     pygame.draw.circle(screen, blue, (c2.pos[0], c2.pos[1]), c2.radius)
-    # pygame.draw.rect(screen, green, (r3.pos[0], r3.pos[1], square_size, square_size))
 
     # Update display
     pygame.display.flip()

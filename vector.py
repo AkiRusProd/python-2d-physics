@@ -81,3 +81,9 @@ class Vector2D:
     
     def abs(self):
         return Vector2D(abs(self.x), abs(self.y))
+    
+    @staticmethod
+    def distance(v1, v2):
+        return ((v1[0] - v2[0])**2 + (v1[1] - v2[1])**2)**0.5
+
+

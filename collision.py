@@ -1,11 +1,10 @@
-import math
 from vector import Vector2D
 from body import Body, Rectangle, Circle
 
 
-def aabb_collision(body_1: Rectangle, body_2: Rectangle):
-    if hasattr(body_1, 'radius') or hasattr(body_2, 'radius'):
-        return False
+def aabbs_collision(body_1: Rectangle, body_2: Rectangle):    
+    assert body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle", \
+        "Both body_1 and body_2 must be of shape_type 'Rectangle' for AABB collision."
     
     # If position is the bottom left edge of the body
     # return (
@@ -45,51 +44,64 @@ def aabb_collision(body_1: Rectangle, body_2: Rectangle):
 
 
     normal_vector = separation_vector.normalize()
-    depth = separation_vector.magnitude()
+    penetration_depth = separation_vector.magnitude()
 
-    # Note: separation vector = normal_vector * depth
+    # Note: separation vector = normal_vector * penetration_depth
 
-    reaction(body_1, body_2, normal_vector, depth)
+    reaction(body_1, body_2, normal_vector, penetration_depth)
+
+
+
+def circles_collision(body_1: Circle, body_2: Circle):
+    assert body_1.shape_type == "Circle" and body_2.shape_type == "Circle", \
+        "Both body_1 and body_2 must be of shape_type 'Circle' for Circle collision."
+    
+    distance = Vector2D.distance(body_1.pos, body_2.pos)
+
+    if distance >= body_1.radius + body_2.radius:
+        # If not collision
+        return
+    
+    # If collision
+
+    normal_vector = (body_1.pos - body_2.pos).normalize()
+
+    penetration_depth  = body_1.radius + body_2.radius - distance
+
+    reaction(body_1, body_2, normal_vector, penetration_depth)
     
 
 
 
+def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
 
-def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, depth: float):
-
-    separation_vector = normal_vector * depth
+    separation_vector = normal_vector * penetration_depth
     
-    # print(sx, sy)
     #   -- find the collision normal
     # relative velocity
-    # vx, vy = body_1.velocity[0] - (body_2.velocity[0] or 0), body_1.velocity[1] - (body_2.velocity[1] or 0)
     relative_velocity = body_1.velocity - body_2.velocity
     
     
     # penetration speed
     # ps = vx*nx + vy*ny #relative velocity * normal
     penetration_speed = relative_velocity.dot(normal_vector)
-    penetration = normal_vector * penetration_speed
+    impulse = normal_vector * penetration_speed
    
     if penetration_speed > 0:
         return
     # This check is very important; This ensures that you only resolve collision if the body_1ects are moving towards each othe
-        # sx = max(sx - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass
-        # sy = max(sy - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass
+        # sx = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass # penetration_depth instead sx?
+        # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass # penetration_depth instead sx?
     #  separate the two bodies
-    if body_1.body_type == "dynamic":
+    if body_1.is_static == False:
         body_1.pos += separation_vector
-        # body_1.pos[0] += separation_vector[0]
-        # body_1.pos[1] += separation_vector[1]
-    if body_2.body_type == "dynamic":
+    if body_2.is_static == False:
         body_2.pos -= separation_vector
-        # body_2.pos[0] -= separation_vector[0]
-        # body_2.pos[1] -= separation_vector[1]
     
     # ts = vx*ny - vy*nx 
     # tx, ty = ny*ts, -nx*ts
     # tx, ty = vx - px, vy - py
-    tangent = relative_velocity - penetration
+    tangent = relative_velocity - impulse
     r = 1 + max(body_1.bounce, body_2.bounce)
     f = min(body_1.friction, body_2.friction)
 
@@ -97,19 +109,15 @@ def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, depth: float):
     # j /= 1 / body_1.mass + 1 / body_2.mass
     # p = [j * nx, j * ny]
 
-    penetration /= 1 / body_1.mass + 1 / body_2.mass
+    impulse /= 1 / body_1.mass + 1 / body_2.mass
     tangent /= 1 / body_1.mass + 1 / body_2.mass
 
-    if body_1.body_type == "dynamic":
-        # body_1.velocity[0] -= (px * r + tx * f) / body_1.mass
-        # body_1.velocity[1] -= (py * r + ty * f) / body_1.mass
-        body_1.velocity -= (penetration * r + tangent * f) / body_1.mass
+    if body_1.is_static == False:
+        body_1.velocity -= (impulse * r + tangent * f) / body_1.mass
 
 
-    if body_2.body_type == "dynamic":
-        # body_2.velocity[0] += (px * r + tx * f) / body_2.mass
-        # body_2.velocity[1] += (py * r + ty * f) / body_2.mass
-        body_2.velocity += (penetration * r + tangent * f) / body_2.mass
+    if body_2.is_static == False:
+        body_2.velocity += (impulse * r + tangent * f) / body_2.mass
 
 
 
