@@ -4,7 +4,7 @@ from body import Body, Rectangle, Circle
 
 def aabbs_collision(body_1: Rectangle, body_2: Rectangle):    
     assert body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle", \
-        "Both body_1 and body_2 must be of shape_type 'Rectangle' for AABB collision."
+        "Both body_1 and body_2 must be of shape_type 'Rectangle' for polygon collision."
     
     # If position is the bottom left edge of the body
     # return (
@@ -72,6 +72,103 @@ def circles_collision(body_1: Circle, body_2: Circle):
     
 
 
+def project_circle(center, radius, axis):
+    direction = axis.normalize()
+    # direction_and_radius = Vector2D(*[direction[i] * radius for i in range(len(direction))])
+    direction_and_radius = direction * radius
+
+    # p1 = [center[i] + direction_and_radius[i] for i in range(len(center))]
+    # p2 = [center[i] - direction_and_radius[i] for i in range(len(center))]
+
+    p1 = center + direction_and_radius
+    p2 = center - direction_and_radius
+
+    min_proj = p1.dot(axis)
+    max_proj = p2.dot(axis)
+
+    if min_proj > max_proj:
+        min_proj, max_proj = max_proj, min_proj
+
+    return min_proj, max_proj
+
+
+def project_vertices(vertices, axis):
+    min_proj = float('inf')
+    max_proj = float('-inf')
+
+    for v in vertices:
+        proj = v.dot(axis)
+
+        if proj < min_proj:
+            min_proj = proj
+        if proj > max_proj:
+            max_proj = proj
+
+    return min_proj, max_proj
+
+def find_closest_point_on_polygon(circle_center, vertices):
+    result = -1
+    min_distance = float('inf')
+
+    for i, v in enumerate(vertices):
+        dist = Vector2D.distance(v, circle_center)
+
+        if dist < min_distance:
+            min_distance = dist
+            result = i
+
+    return result
+
+def polygon_circle_collision(polygon: Rectangle, circle: Circle):
+    penetration_depth = float('inf')
+    
+    for i in range(len(polygon.vertices)):
+        va = polygon.vertices[i]
+        vb = polygon.vertices[(i + 1) % len(polygon.vertices)]
+
+        edge = vb - va
+
+        axis = Vector2D(-edge.y, edge.x).normalize()
+       
+        # project circle onto axis
+        min_a, max_a = project_vertices(polygon.vertices, axis)
+        min_b, max_b = project_circle(circle.pos, circle.radius, axis)
+        
+        if max_a <= min_b or max_b <= min_a:
+            return False
+        
+        axis_depth = min(max_b - min_a, max_a - min_b)
+
+        if axis_depth < penetration_depth:
+            penetration_depth = axis_depth
+            normal = axis
+    
+    
+    cp_index = find_closest_point_on_polygon(circle.pos, polygon.vertices)
+    
+    cp = polygon.vertices[cp_index]
+    
+    axis = (cp - circle.pos).normalize()
+
+    min_a, max_a = project_circle(circle.pos, circle.radius, axis)
+    min_b, max_b = project_vertices(polygon.vertices, axis)
+
+    if max_a <= min_b or max_b <= min_a:
+        return False
+    
+    axis_depth = min(max_b - min_a, max_a - min_b)
+
+    if axis_depth < penetration_depth:
+        penetration_depth = axis_depth
+        normal = axis
+
+
+    direction = (polygon.pos - circle.pos).normalize()
+   
+    if direction.dot(normal) < 0:
+        normal *= -1
+        
+    reaction(polygon, circle, normal, penetration_depth)
 
 def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
 
@@ -94,9 +191,9 @@ def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_de
         # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass # penetration_depth instead sx?
     #  separate the two bodies
     if body_1.is_static == False:
-        body_1.pos += separation_vector
+        body_1.pos += separation_vector # / 2
     if body_2.is_static == False:
-        body_2.pos -= separation_vector
+        body_2.pos -= separation_vector # / 2
     
     # ts = vx*ny - vy*nx 
     # tx, ty = ny*ts, -nx*ts
