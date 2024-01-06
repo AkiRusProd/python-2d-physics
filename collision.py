@@ -16,7 +16,7 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
 
     # Another solution:
     d: Vector2D = body_1.pos - body_2.pos
-    ad = d.abs()
+    ad = abs(d)
 
     sum_half_sizes = Vector2D(body_1.width / 2 + body_2.width /2, body_1.height / 2 + body_2.height / 2)
     
@@ -43,8 +43,8 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
         separation_vector.y = -separation_vector.y
 
 
-    normal_vector = separation_vector.normalize()
-    penetration_depth = separation_vector.magnitude()
+    normal_vector = separation_vector.normalize
+    penetration_depth = separation_vector.magnitude
 
     # Note: separation vector = normal_vector * penetration_depth
 
@@ -64,16 +64,20 @@ def circles_collision(body_1: Circle, body_2: Circle):
     
     # If collision
 
-    normal_vector = (body_1.pos - body_2.pos).normalize()
+    normal_vector = (body_1.pos - body_2.pos).normalize
 
     penetration_depth  = body_1.radius + body_2.radius - distance
 
     reaction(body_1, body_2, normal_vector, penetration_depth)
+
+    contact_point = circles_contact_points(body_1, body_2)
+
+    return contact_point
     
 
 
-def project_circle(center, radius, axis):
-    direction = axis.normalize()
+def project_circle(center, radius: float, axis: Vector2D):
+    direction = axis.normalize
     # direction_and_radius = Vector2D(*[direction[i] * radius for i in range(len(direction))])
     direction_and_radius = direction * radius
 
@@ -92,7 +96,7 @@ def project_circle(center, radius, axis):
     return min_proj, max_proj
 
 
-def project_vertices(vertices, axis):
+def project_vertices(vertices: list[Vector2D], axis: Vector2D):
     min_proj = float('inf')
     max_proj = float('-inf')
 
@@ -106,7 +110,7 @@ def project_vertices(vertices, axis):
 
     return min_proj, max_proj
 
-def find_closest_point_on_polygon(circle_center, vertices):
+def find_closest_point_on_polygon(circle_center: Vector2D, vertices: list[Vector2D]):
     result = -1
     min_distance = float('inf')
 
@@ -132,7 +136,7 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
 
         edge = vb - va
 
-        axis = Vector2D(-edge.y, edge.x).normalize()
+        axis = Vector2D(-edge.y, edge.x).normalize
        
         # project circle onto axis
         min_a, max_a = project_vertices(polygon.vertices, axis)
@@ -152,7 +156,7 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
     
     cp = polygon.vertices[cp_index]
     
-    axis = (cp - circle.pos).normalize()
+    axis = (cp - circle.pos).normalize
 
     min_a, max_a = project_circle(circle.pos, circle.radius, axis)
     min_b, max_b = project_vertices(polygon.vertices, axis)
@@ -167,14 +171,16 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
         normal = axis
 
 
-    direction = (polygon.pos - circle.pos).normalize()
+    direction = (polygon.pos - circle.pos).normalize
    
     if direction.dot(normal) < 0:
         normal *= -1
         
     reaction(polygon, circle, normal, penetration_depth)
 
+    contact_point = polygon_circle_contact_points(polygon, circle)
 
+    return contact_point
 
 def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
     normal = Vector2D(0, 0)
@@ -185,7 +191,7 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
         vb = polygon_1.vertices[(i + 1) % len(polygon_1.vertices)]
 
         edge = vb - va
-        axis = Vector2D(-edge.y, edge.x).normalize()
+        axis = Vector2D(-edge.y, edge.x).normalize
 
         min_a, max_a = project_vertices(polygon_1.vertices, axis)
         min_b, max_b = project_vertices(polygon_2.vertices, axis)
@@ -204,7 +210,7 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
         vb = polygon_2.vertices[(i + 1) % len(polygon_2.vertices)]
 
         edge = vb - va
-        axis = Vector2D(-edge.y, edge.x).normalize()
+        axis = Vector2D(-edge.y, edge.x).normalize
 
         min_a, max_a = project_vertices(polygon_1.vertices, axis)
         min_b, max_b = project_vertices(polygon_2.vertices, axis)
@@ -218,12 +224,16 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
             depth = axis_depth
             normal = axis
 
-    direction = (polygon_1.pos - polygon_2.pos).normalize()
+    direction = (polygon_1.pos - polygon_2.pos).normalize
 
     if direction.dot(normal) < 0:
         normal *= -1
 
     reaction(polygon_1, polygon_2, normal, depth)
+
+    contact_points = polygons_contact_points(polygon_1, polygon_2)
+
+    return contact_points
 
 def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
 
@@ -246,9 +256,9 @@ def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_de
         # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass # penetration_depth instead sx?
     #  separate the two bodies
     if body_1.is_static == False:
-        body_1.pos += separation_vector # / 2
+        body_1.pos += separation_vector / 2
     if body_2.is_static == False:
-        body_2.pos -= separation_vector # / 2
+        body_2.pos -= separation_vector / 2
     
     # ts = vx*ny - vy*nx 
     # tx, ty = ny*ts, -nx*ts
@@ -274,3 +284,174 @@ def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_de
 
 
     
+
+
+
+
+
+
+def circles_contact_points(body_1: Circle, body_2: Circle):
+    normal = (body_2.pos - body_1.pos).normalize
+
+    contact_point = body_1.pos + normal * body_1.radius
+
+    return [contact_point]
+    
+
+def point_to_line_segment_projection(point: Vector2D, a: Vector2D, b: Vector2D):
+    ab = b - a # line segment vector
+    ap = point - a #point vector
+    
+    proj = ap.dot(ab)
+    d = proj / ab.dot(ab) # ad.dot(ab) = len(ab) ** 2, but dot more efficient
+
+    if d <= 0:
+        contact_point = a
+    elif d >= 1:
+        contact_point = b
+    else: 
+        contact_point = a + ab * d
+
+    distance = Vector2D.distance(contact_point, point)
+
+    return contact_point, distance
+
+def polygon_circle_contact_points(polygon: Rectangle, circle: Circle):
+
+    min_distance = float('inf')
+    for i in range(len(polygon.vertices)):
+        va = polygon.vertices[i]
+        vb = polygon.vertices[(i + 1) % len(polygon.vertices)]
+
+        cp, distance = point_to_line_segment_projection(circle.pos, va, vb)
+
+        if distance < min_distance:
+            min_distance = distance
+            contact_point = cp
+
+        
+    return [contact_point]
+
+def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
+    epsilon = 0.0005
+    min_distance = float('inf')
+    contact_point_1 = Vector2D(0, 0)
+    contact_point_2 = Vector2D(0, 0)
+
+    for i in range(len(polygon_1.vertices)):
+        vp = polygon_1.vertices[i]
+        for j in range(len(polygon_2.vertices)):
+            va = polygon_2.vertices[j]
+            vb = polygon_2.vertices[(j + 1) % len(polygon_2.vertices)]
+
+            cp, distance = point_to_line_segment_projection(vp, va, vb)
+
+            if abs(distance - min_distance) < epsilon and not cp.distance_to(contact_point_1) < epsilon:
+                # not cp.dot(contact_point_1) < epsilon ** 2 means cp is not contact_point_1
+                contact_point_2 = cp
+            elif distance < min_distance:
+                min_distance = distance
+                contact_point_1 = cp
+
+    for i in range(len(polygon_2.vertices)):
+        vp = polygon_2.vertices[i]
+        for j in range(len(polygon_1.vertices)):
+            va = polygon_1.vertices[j]
+            vb = polygon_1.vertices[(j + 1) % len(polygon_1.vertices)]
+
+            cp, distance = point_to_line_segment_projection(vp, va, vb)
+
+            if abs(distance - min_distance) < epsilon and not cp.distance_to(contact_point_1) < epsilon:
+                contact_point_2 = cp
+            elif distance < min_distance:
+                min_distance = distance
+                contact_point_1 = cp
+                
+
+    return [contact_point_1, contact_point_2]
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Alternative polygon vs polygon contact points detection method
+
+def clip(v1, v2, n, o):
+    cp = []
+    d1 = n.dot(v1) - o
+    d2 = n.dot(v2) - o
+    if d1 >= 0.0:
+        cp.append(v1)
+    if d2 >= 0.0:
+        cp.append(v2)
+    if d1 * d2 < 0.0:
+        e = v2 - v1
+        u = d1 / (d1 - d2)
+        e = e * u + v1
+        cp.append(e)
+    return cp
+
+def find_farthest_vertex(vertices, n):
+    max_projection = -float('inf')
+    index = -1
+    for i, v in enumerate(vertices):
+        projection = n.dot(v)
+        if projection > max_projection:
+            max_projection = projection
+            index = i
+    return index
+
+def best_edge(vertices, n):
+    index = find_farthest_vertex(vertices, n)
+    v = vertices[index]
+    v1 = vertices[(index + 1) % len(vertices)]
+    v0 = vertices[(index - 1) % len(vertices)]
+    l = v - v1
+    r = v - v0
+    l = l.normalize
+    r = r.normalize
+    if r.dot(n) <= l.dot(n):
+        return (v, v0)
+    else:
+        return (v, v1)
+
+def polygons_clipping_contact_points(polygon_1, polygon_2, n):
+    # Contact Points Using Clipping
+    # https://dyn4j.org/2011/11/contact-points-using-clipping/
+    n *= -1
+    e1 = best_edge(polygon_1.vertices, n)
+    e2 = best_edge(polygon_2.vertices, n * -1)
+    ref = e1 if abs(e1[0].dot(n)) <= abs(e2[0].dot(n)) else e2
+    inc = e2 if ref == e1 else e1
+    flip = ref != e1
+
+    refv = ref[1] - ref[0]
+    refv = refv.normalize
+    o1 = refv.dot(ref[0])
+    cp = clip(inc[0], inc[1], refv, o1)
+    if len(cp) < 2:
+        return []
+
+    o2 = refv.dot(ref[1])
+    cp = clip(cp[0], cp[1], refv * -1, o2 * -1)
+    if len(cp) < 2:
+        return []
+
+    refNorm = Vector2D(-refv.y, refv.x)
+    if flip:
+        refNorm = refNorm * -1
+        
+    max_projection = max(refNorm.dot(v) for v in [ref[0], ref[1]])
+    
+    cp = [point for point in cp if refNorm.dot(point) - max_projection < 0.05]
+
+    return cp

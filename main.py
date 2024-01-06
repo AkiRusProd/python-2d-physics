@@ -12,7 +12,8 @@ from collision import aabbs_collision, circles_collision, polygons_collision, po
 # https://habr.com/en/articles/509568/                                                                                  
 # https://www.jeffreythompson.org/collision-detection/table_of_contents.php                                             
 # https://dyn4j.org/2010/01/sat/                                                                                        
-
+# https://dyn4j.org/2011/11/contact-points-using-clipping/
+# https://www.codezealot.org/archives/88/#gjk-support
 
 
 
@@ -51,10 +52,11 @@ r1 = Rectangle(
 )
 
 r2 = Rectangle(
-    x = 700,
-    y = 100,
+    x = 250,
+    y = 250,
     width = 50 * 2,
-    height = 50 * 2
+    height = 50 * 2,
+    # is_static=True
 )
 
 c1 = Circle(
@@ -173,16 +175,6 @@ while True:
     for body in BODIES:
         check_screen_collision(body)
 
-    for body in BODIES:
-        for body2 in BODIES:
-            if body != body2:
-                if body.shape_type == "Rectangle" and body2.shape_type == "Rectangle":
-                    polygons_collision(body, body2)
-                elif body.shape_type == "Circle" and body2.shape_type == "Circle":
-                    circles_collision(body, body2)
-                elif body.shape_type == "Rectangle" and body2.shape_type == "Circle":
-                    polygon_circle_collision(body, body2)
-
     # Draw background
     screen.fill(white)
 
@@ -198,6 +190,36 @@ while True:
             pygame.draw.rect(screen, color, (body.pos[0] - body.width / 2, body.pos[1] - body.height / 2, body.width, body.height))
         elif body.shape_type == "Circle":
             pygame.draw.circle(screen, color, (body.pos[0], body.pos[1]), body.radius)
+
+    for i in range(len(BODIES) - 1):
+        for j in range(i + 1, len(BODIES)):
+            body_1 = BODIES[i]
+            body_2 = BODIES[j]
+
+            if body_1 != body_2:
+                if body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle":
+                    # polygons_collision(body_1, body_2)
+                    # DEBUG
+                    cps = polygons_collision(body_1, body_2)
+                    if cps:
+                        for cp in cps: 
+                            pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
+
+                elif body_1.shape_type == "Circle" and body_2.shape_type == "Circle":
+                    # circles_collision(body_1, body_2)
+                    # DEBUG
+                    cp = circles_collision(body_1, body_2)
+                    if cp:
+                        cp = cp[0]
+                        pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
+
+                elif body_1.shape_type == "Rectangle" and body_2.shape_type == "Circle":
+                    # polygon_circle_collision(body_1, body_2)
+                    # DEBUG
+                    cp = polygon_circle_collision(body_1, body_2)
+                    if cp:
+                        cp = cp[0]
+                        pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
 
     # Update display
     pygame.display.flip()
