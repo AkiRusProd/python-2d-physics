@@ -48,7 +48,7 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
 
     # Note: separation vector = normal_vector * penetration_depth
 
-    reaction(body_1, body_2, normal_vector, penetration_depth)
+    resolution(body_1, body_2, normal_vector, penetration_depth)
 
 
 
@@ -68,7 +68,7 @@ def circles_collision(body_1: Circle, body_2: Circle):
 
     penetration_depth  = body_1.radius + body_2.radius - distance
 
-    reaction(body_1, body_2, normal_vector, penetration_depth)
+    resolution(body_1, body_2, normal_vector, penetration_depth)
 
     contact_point = circles_contact_points(body_1, body_2)
 
@@ -176,7 +176,7 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
     if direction.dot(normal) < 0:
         normal *= -1
         
-    reaction(polygon, circle, normal, penetration_depth)
+    resolution(polygon, circle, normal, penetration_depth)
 
     contact_point = polygon_circle_contact_points(polygon, circle)
 
@@ -229,13 +229,13 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
     if direction.dot(normal) < 0:
         normal *= -1
 
-    reaction(polygon_1, polygon_2, normal, depth)
+    resolution(polygon_1, polygon_2, normal, depth)
 
     contact_points = polygons_contact_points(polygon_1, polygon_2)
 
     return contact_points
 
-def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
+def resolution(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
 
     separation_vector = normal_vector * penetration_depth
     
@@ -335,8 +335,8 @@ def polygon_circle_contact_points(polygon: Rectangle, circle: Circle):
 def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
     epsilon = 0.0005
     min_distance = float('inf')
-    contact_point_1 = Vector2D(0, 0)
-    contact_point_2 = Vector2D(0, 0)
+    contact_point_1 = None
+    contact_point_2 = None
 
     for i in range(len(polygon_1.vertices)):
         vp = polygon_1.vertices[i]
@@ -346,8 +346,7 @@ def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
 
             cp, distance = point_to_line_segment_projection(vp, va, vb)
 
-            if abs(distance - min_distance) < epsilon and not cp.distance_to(contact_point_1) < epsilon:
-                # not cp.dot(contact_point_1) < epsilon ** 2 means cp is not contact_point_1
+            if contact_point_1 is not None and abs(distance - min_distance) < epsilon and not cp.distance_to(contact_point_1) < epsilon:
                 contact_point_2 = cp
             elif distance < min_distance:
                 min_distance = distance
@@ -361,14 +360,13 @@ def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
 
             cp, distance = point_to_line_segment_projection(vp, va, vb)
 
-            if abs(distance - min_distance) < epsilon and not cp.distance_to(contact_point_1) < epsilon:
+            if contact_point_1 is not None and abs(distance - min_distance) < epsilon and not cp.distance_to(contact_point_1) < epsilon:
                 contact_point_2 = cp
             elif distance < min_distance:
                 min_distance = distance
                 contact_point_1 = cp
-                
 
-    return [contact_point_1, contact_point_2]
+    return [cp for cp in [contact_point_1, contact_point_2] if cp is not None]
                 
 
 

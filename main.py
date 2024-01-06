@@ -20,6 +20,8 @@ from collision import aabbs_collision, circles_collision, polygons_collision, po
 # TODO: 
 # Add 2D Rotational Kinematics
 # Add SAT for polygons collision instead of AABB [OK]
+# Refactor the code
+# FIX polygons_clipping_contact_points BUG
 
 
 # Initialize Pygame
@@ -60,7 +62,7 @@ r2 = Rectangle(
 )
 
 c1 = Circle(
-    x = 160,
+    x = 400,
     y = 200,
     radius = 50//2
 )
@@ -81,7 +83,8 @@ ground = Rectangle(
     is_static = True,
     friction=0.9,
     mass=float("inf"),
-    bounce=0
+    bounce=0,
+    name = "ground"
 )
 
 platform = Rectangle(
@@ -91,8 +94,9 @@ platform = Rectangle(
     height = 20,
     is_static = True,
     mass=float("inf"),
-    bounce=0.9,
-    friction=1
+    bounce=0.1,
+    friction=1,
+    name = "platform"
 )
 
 platform.rotate(-30, in_radians=False)
@@ -237,6 +241,13 @@ while True:
                     # polygon_circle_collision(body_1, body_2)
                     # DEBUG
                     cp = polygon_circle_collision(body_1, body_2)
+                    if cp:
+                        cp = cp[0]
+                        pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
+                elif body_1.shape_type == "Circle" and body_2.shape_type == "Rectangle":
+                    # polygon_circle_collision(body_2, body_1)
+                    # DEBUG
+                    cp = polygon_circle_collision(body_2, body_1)
                     if cp:
                         cp = cp[0]
                         pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
