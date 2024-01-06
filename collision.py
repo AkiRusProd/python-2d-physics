@@ -120,6 +120,10 @@ def find_closest_point_on_polygon(circle_center, vertices):
     return result
 
 def polygon_circle_collision(polygon: Rectangle, circle: Circle):
+    assert polygon.shape_type == "Rectangle" and circle.shape_type == "Circle", \
+        "Shape types of polygon and circle must be 'Rectangle' and 'Circle' respectively."
+    
+    normal = Vector2D(0, 0)
     penetration_depth = float('inf')
     
     for i in range(len(polygon.vertices)):
@@ -169,6 +173,57 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
         normal *= -1
         
     reaction(polygon, circle, normal, penetration_depth)
+
+
+
+def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
+    normal = Vector2D(0, 0)
+    depth = float('inf')
+
+    for i in range(len(polygon_1.vertices)):
+        va = polygon_1.vertices[i]
+        vb = polygon_1.vertices[(i + 1) % len(polygon_1.vertices)]
+
+        edge = vb - va
+        axis = Vector2D(-edge.y, edge.x).normalize()
+
+        min_a, max_a = project_vertices(polygon_1.vertices, axis)
+        min_b, max_b = project_vertices(polygon_2.vertices, axis)
+
+        if min_a >= max_b or min_b >= max_a:
+            return
+
+        axis_depth = min(max_b - min_a, max_a - min_b)
+
+        if axis_depth < depth:
+            depth = axis_depth
+            normal = axis
+
+    for i in range(len(polygon_2.vertices)):
+        va = polygon_2.vertices[i]
+        vb = polygon_2.vertices[(i + 1) % len(polygon_2.vertices)]
+
+        edge = vb - va
+        axis = Vector2D(-edge.y, edge.x).normalize()
+
+        min_a, max_a = project_vertices(polygon_1.vertices, axis)
+        min_b, max_b = project_vertices(polygon_2.vertices, axis)
+
+        if min_a >= max_b or min_b >= max_a:
+            return
+
+        axis_depth = min(max_b - min_a, max_a - min_b)
+
+        if axis_depth < depth:
+            depth = axis_depth
+            normal = axis
+
+    direction = (polygon_1.pos - polygon_2.pos).normalize()
+
+    if direction.dot(normal) < 0:
+        normal *= -1
+
+    reaction(polygon_1, polygon_2, normal, depth)
 
 def reaction(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
 

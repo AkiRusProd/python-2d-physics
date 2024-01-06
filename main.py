@@ -1,25 +1,24 @@
 import pygame
 import sys
 from body import Rectangle, Circle
-from collision import aabbs_collision, circles_collision, polygon_circle_collision
+from collision import aabbs_collision, circles_collision, polygons_collision, polygon_circle_collision
 
-#########################################################################################################################
-#                                                                                                                       #
-# References:                                                                                                           #
-#                                                                                                                       # 
-# https://2dengine.com/doc/collisions.html                                                                              #
-# https://habr.com/en/articles/336908/                                                                                  #
-# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t   #
-# https://habr.com/en/articles/509568/                                                                                  #
-# https://www.jeffreythompson.org/collision-detection/table_of_contents.php                                             #
-#                                                                                                                       #
-#########################################################################################################################
+
+                                                                                                                      
+# References:                                                                                                                                                                                                                                 
+# https://2dengine.com/doc/collisions.html                                                                              
+# https://habr.com/en/articles/336908/                                                                                  
+# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t   
+# https://habr.com/en/articles/509568/                                                                                  
+# https://www.jeffreythompson.org/collision-detection/table_of_contents.php                                             
+# https://dyn4j.org/2010/01/sat/                                                                                        
+
 
 
 
 # TODO: 
-# Add Rotational Physic
-# Add SAT for polygons collision instead of AABB
+# Add 2D Rotational Kinematics
+# Add SAT for polygons collision instead of AABB [OK]
 
 
 # Initialize Pygame
@@ -36,6 +35,7 @@ red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (0, 0, 255)
 black = (0, 0, 0)
+orange = (255, 128, 0)
 
 # Set up player properties
 PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
@@ -177,7 +177,7 @@ while True:
         for body2 in BODIES:
             if body != body2:
                 if body.shape_type == "Rectangle" and body2.shape_type == "Rectangle":
-                    aabbs_collision(body, body2)
+                    polygons_collision(body, body2)
                 elif body.shape_type == "Circle" and body2.shape_type == "Circle":
                     circles_collision(body, body2)
                 elif body.shape_type == "Rectangle" and body2.shape_type == "Circle":
@@ -187,7 +187,13 @@ while True:
     screen.fill(white)
 
     for body in BODIES:
-        color = red if body.name == "player" else black
+        if body.name == "player":
+            color = red
+        elif body.is_static:
+            color = orange
+        else:
+            color = black
+        
         if body.shape_type == "Rectangle":
             pygame.draw.rect(screen, color, (body.pos[0] - body.width / 2, body.pos[1] - body.height / 2, body.width, body.height))
         elif body.shape_type == "Circle":
