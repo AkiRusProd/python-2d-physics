@@ -5,7 +5,7 @@ class Vector2D:
         self.x = x
         self.y = y
 
-    def __add__(self, other):
+    def add(self, other):
         if isinstance(other, Vector2D):
             return Vector2D(self.x + other.x, self.y + other.y)
         elif isinstance(other, tuple) or isinstance(other, list):
@@ -15,8 +15,7 @@ class Vector2D:
         else:
             raise TypeError("Unsupported operand type(s) for +: 'Vector2D' and '{}'".format(type(other).__name__))
         
-
-    def __sub__(self, other):
+    def sub(self, other):
         if isinstance(other, Vector2D):
             return Vector2D(self.x - other.x, self.y - other.y)
         elif isinstance(other, tuple) or isinstance(other, list):
@@ -26,7 +25,7 @@ class Vector2D:
         else:
             raise TypeError("Unsupported operand type(s) for -: 'Vector2D' and '{}'".format(type(other).__name__))
         
-    def __mul__(self, other):
+    def mul(self, other):
         if isinstance(other, Vector2D):
             return Vector2D(self.x * other.x, self.y * other.y)
         elif isinstance(other, tuple) or isinstance(other, list):
@@ -36,7 +35,7 @@ class Vector2D:
         else:
             raise TypeError("Unsupported operand type(s) for *: 'Vector2D' and '{}'".format(type(other).__name__))
 
-    def __truediv__(self, other):
+    def div(self, other):
         if isinstance(other, Vector2D):
             return Vector2D(self.x / other.x, self.y / other.y)
         elif isinstance(other, tuple) or isinstance(other, list):
@@ -65,6 +64,19 @@ class Vector2D:
             self.y = value
         else:
             raise IndexError("Index out of range")
+        
+    def __add__(self, other):
+        return self.add(other)
+    
+    def __sub__(self, other):
+        return self.sub(other)
+    
+    def __mul__(self, other):
+        return self.mul(other)
+    
+    def __truediv__(self, other):
+        return self.div(other)
+    
 
     def dot(self, other):
         return self.x * other.x + self.y * other.y
@@ -94,7 +106,26 @@ class Vector2D:
     def distance(v1, v2):
         return ((v1[0] - v2[0])**2 + (v1[1] - v2[1])**2)**0.5
     
-    def __repr__(self):
+    def __str__(self):
         return "Vector2D({}, {})".format(self.x, self.y)
 
+    def __neg__(self):
+        return Vector2D(-self.x, -self.y)
+        
+    def rotate(self, angle, in_radians = True):
+        """Rotate the vector by an angle in radians"""
+        if not in_radians:
+            angle = math.radians(angle)
+
+        cos = math.cos(angle)
+        sin = math.sin(angle)
+        x = self.x * cos - self.y * sin
+        y = self.x * sin + self.y * cos
+        return Vector2D(x, y)
+    
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+    
+    def __ne__(self, other):
+        return not self == other
 

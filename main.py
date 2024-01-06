@@ -84,8 +84,23 @@ ground = Rectangle(
     bounce=0
 )
 
+platform = Rectangle(
+    x = WIDTH / 2,
+    y = HEIGHT / 2,
+    width = 200,
+    height = 20,
+    is_static = True,
+    mass=float("inf"),
+    bounce=0.9,
+    friction=1
+)
 
-BODIES = [r1, r2, ground, c1, c2]
+platform.rotate(-30, in_radians=False)
+
+
+
+
+BODIES = [r1, r2, ground, c1, c2, platform]
 
 # Set up physics variables
 GRAVITY = 9.8
@@ -187,7 +202,12 @@ while True:
             color = black
         
         if body.shape_type == "Rectangle":
-            pygame.draw.rect(screen, color, (body.pos[0] - body.width / 2, body.pos[1] - body.height / 2, body.width, body.height))
+            # pygame.draw.rect(screen, color, (body.pos[0] - body.width / 2, body.pos[1] - body.height / 2, body.width, body.height))
+            vertices = body.vertices
+
+            points = [(vertex.x, vertex.y) for vertex in vertices]
+            pygame.draw.polygon(screen, color, points)
+
         elif body.shape_type == "Circle":
             pygame.draw.circle(screen, color, (body.pos[0], body.pos[1]), body.radius)
 
