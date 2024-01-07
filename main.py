@@ -21,7 +21,7 @@ from collision import aabbs_collision, circles_collision, polygons_collision, po
 
 # TODO: 
 # Add 2D Rotational Kinematics [OK]
-# Add friction to rotational bodies
+# Add friction to rotational bodies [OK]
 # Add SAT for polygons collision instead of AABB [OK]
 # Refactor the code
 # FIX polygons_clipping_contact_points BUG
@@ -92,7 +92,7 @@ ground = Rectangle(
     dynamic_friction=0.1,
     static_friction=0.1,
     mass=float("inf"),
-    bounce=0.5,
+    bounce=0.7,
     name = "ground"
 )
 
@@ -103,7 +103,7 @@ platform = Rectangle(
     height = 20,
     is_static = True,
     mass=float("inf"),
-    bounce=0.1,
+    bounce=0.8,
     static_friction=1,
     name = "platform"
 )

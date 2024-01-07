@@ -323,11 +323,12 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
         body_2.pos += separation_vector / 2
 
     # Calculate restitution (bounciness)
-    r = min(body_1.bounce, body_2.bounce)
+    r = max(body_1.bounce, body_2.bounce)
 
     impulses = [Vector2D(0, 0), Vector2D(0, 0)]
     r_1_offsets = [Vector2D(0, 0), Vector2D(0, 0)]
     r_2_offsets = [Vector2D(0, 0), Vector2D(0, 0)]
+    js = [0, 0]
 
     # Calculate impulses for each contact point
     for i in range(len(contact_points)):
@@ -353,6 +354,7 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
         impulse = normal_vector * j
         
         impulses[i] = impulse
+        js[i] = j
 
     # Apply impulses for both bodies
     for i in range(len(contact_points)):
@@ -360,12 +362,56 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
         r_1 = r_1_offsets[i]
         r_2 = r_2_offsets[i]
 
-        body_1.velocity += -impulse / body_1.mass 
-        body_1.angular_velocity += -r_1.cross(impulse) / body_1.inertia
+        body_1.velocity -= impulse / body_1.mass 
+        body_1.angular_velocity -= r_1.cross(impulse) / body_1.inertia
         body_2.velocity += impulse / body_2.mass 
         body_2.angular_velocity += r_2.cross(impulse) / body_2.inertia
 
 
+    friction_impulses = [Vector2D(0, 0), Vector2D(0, 0)]
+    for i in range(len(contact_points)):
+        r_1 = contact_points[i] - body_1.pos
+        r_2 = contact_points[i] - body_2.pos
+
+        r_1_offsets[i] = r_1
+        r_2_offsets[i] = r_2
+
+        r_1_perp = Vector2D(-r_1.y, r_1.x)
+        r_2_perp = Vector2D(-r_2.y, r_2.x)
+
+        relative_velocity = (body_2.velocity + r_2_perp * body_2.angular_velocity) - (body_1.velocity + r_1_perp * body_1.angular_velocity)
+        tangent = relative_velocity - normal_vector * relative_velocity.dot(normal_vector)
+        if tangent == Vector2D(0, 0):
+            continue
+        else:
+            tangent = tangent.normalize
+
+        jt = -1 * relative_velocity.dot(tangent)
+        jt /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(tangent) ** 2)  / body_1.inertia + (r_2_perp.dot(tangent) ** 2) / body_2.inertia
+        jt /= len(contact_points)
+
+        static_friction = (body_1.static_friction + body_2.static_friction) / 2
+
+        j = js[i]
+        if abs(jt) <= j * static_friction:
+            # friction_impulse = jt * tangent
+            friction_impulse = tangent * jt
+        else:
+            dynamic_friction = (body_1.dynamic_friction + body_2.dynamic_friction) / 2
+            # friction_impulse = -j * tangent * dynamic_friction
+            friction_impulse = tangent * (-1) * j * dynamic_friction
+
+        friction_impulses[i] = friction_impulse
+
+    for i in range(len(contact_points)):
+        friction_impulse = friction_impulses[i]
+        r_1 = r_1_offsets[i]
+        r_2 = r_2_offsets[i]
+
+        body_1.velocity -= friction_impulse / body_1.mass 
+        body_1.angular_velocity -= r_1.cross(friction_impulse) / body_1.inertia
+        body_2.velocity += friction_impulse / body_2.mass 
+        body_2.angular_velocity += r_2.cross(friction_impulse) / body_2.inertia
 
 
 
