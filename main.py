@@ -16,7 +16,9 @@ from collision import aabbs_collision, circles_collision, polygons_collision, po
 # https://www.codezealot.org/archives/88/#gjk-support
 # https://en.wikipedia.org/wiki/Collision_response#Impulse-based_friction_model
 # https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756t
-
+# https://research.ncl.ac.uk/game/mastersdegree/gametechnologies/physicstutorials/5collisionresponse/Physics%20-%20Collision%20Response.pdf
+# https://chrishecker.com/images/e/e7/Gdmphys3.pdf
+# https://perso.liris.cnrs.fr/nicolas.pronost/UUCourses/GamePhysics/lectures/lecture%207%20Collision%20Resolution.pdf
 
 
 # TODO: 

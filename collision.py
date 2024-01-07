@@ -239,23 +239,38 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
     return contact_points
 
 
+def separate_bodies(body_1: Body, body_2: Body, normal, penetration_depth):
+    separation_vector = normal * penetration_depth
+
+    # Another Solution
+    # percent = 0.2; slope = 0.01
+    #separation_vector = max(penetration_depth - slope, 0) / (1 / body_1.mass + 1 / body_2.mass) * percent * normal
+
+    if body_1.is_static:
+        body_2.pos += separation_vector
+    elif body_2.is_static:
+        body_1.pos -= separation_vector
+    else:
+        body_1.pos -= separation_vector / 2
+        body_2.pos += separation_vector / 2
+
+    # Another Solution
+    # if body_1.is_static == False:
+    #     body_1.pos -= separation_vector * 1 / body_1.mass
+    # if body_2.is_static == False:
+    #     body_2.pos += separation_vector * 1 / body_2.mass
+
+
+
 
 def resolution(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
     normal_vector *= -1
 
-    separation_vector = normal_vector * penetration_depth
+    separate_bodies(body_1, body_2, normal_vector, penetration_depth)
     
     relative_velocity = body_2.velocity - body_1.velocity
     
     penetration_velocity = relative_velocity.dot(normal_vector)
-
-    # sx = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass # penetration_depth instead sx?
-    # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass # penetration_depth instead sx?
-    #  separate the two bodies
-    if body_1.is_static == False:
-        body_1.pos -= separation_vector / 2
-    if body_2.is_static == False:
-        body_2.pos += separation_vector / 2
 
     if penetration_velocity > 0:
         return
@@ -301,26 +316,10 @@ def resolution(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_
 
 def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float, contact_points: list):
     normal_vector *= -1
-    separation_vector = normal_vector * penetration_depth
+
+    separate_bodies(body_1, body_2, normal_vector, penetration_depth)
     
     relative_velocity = body_2.velocity - body_1.velocity
-
-
-    # sx = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass #
-    # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass #
-    #  separate the two bodies
-    # if body_1.is_static == False:
-    #     body_1.pos += separation_vector / 2
-    # if body_2.is_static == False:
-    #     body_2.pos -= separation_vector / 2
-
-    if body_1.is_static:
-        body_2.pos += separation_vector
-    elif body_2.is_static:
-        body_1.pos -= separation_vector
-    else:
-        body_1.pos -= separation_vector / 2
-        body_2.pos += separation_vector / 2
 
     # Calculate restitution (bounciness)
     r = max(body_1.bounce, body_2.bounce)
@@ -507,7 +506,7 @@ def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
 
 
 
-# Alternative polygon vs polygon contact points detection method
+# Alternative polygon vs polygon contact points detection method BUG
 
 def clip(v1, v2, n, o):
     cp = []
