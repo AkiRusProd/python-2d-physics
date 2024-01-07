@@ -68,9 +68,10 @@ def circles_collision(body_1: Circle, body_2: Circle):
 
     penetration_depth  = body_1.radius + body_2.radius - distance
 
-    resolution(body_1, body_2, normal_vector, penetration_depth)
+    # resolution(body_1, body_2, normal_vector, penetration_depth)
 
     contact_point = circles_contact_points(body_1, body_2)
+    resolution_with_rotation(body_1, body_2, normal_vector, penetration_depth, contact_point)
 
     return contact_point
     
@@ -176,9 +177,10 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
     if direction.dot(normal) < 0:
         normal *= -1
         
-    resolution(polygon, circle, normal, penetration_depth)
+    # resolution(polygon, circle, normal, penetration_depth)
 
     contact_point = polygon_circle_contact_points(polygon, circle)
+    resolution_with_rotation(polygon, circle, normal, penetration_depth, contact_point)
 
     return contact_point
 
@@ -229,61 +231,139 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
     if direction.dot(normal) < 0:
         normal *= -1
 
-    resolution(polygon_1, polygon_2, normal, depth)
+    # resolution(polygon_1, polygon_2, normal, depth)
 
     contact_points = polygons_contact_points(polygon_1, polygon_2)
+    resolution_with_rotation(polygon_1, polygon_2, normal, depth, contact_points)
 
     return contact_points
 
+
+
 def resolution(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float):
+    normal_vector *= -1
 
     separation_vector = normal_vector * penetration_depth
     
-    #   -- find the collision normal
-    # relative velocity
-    relative_velocity = body_1.velocity - body_2.velocity
+    relative_velocity = body_2.velocity - body_1.velocity
     
-    
-    # penetration speed
-    # ps = vx*nx + vy*ny #relative velocity * normal
-    penetration_speed = relative_velocity.dot(normal_vector)
-    impulse = normal_vector * penetration_speed
-   
-    if penetration_speed > 0:
-        return
-    # This check is very important; This ensures that you only resolve collision if the body_1ects are moving towards each othe
-        # sx = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass # penetration_depth instead sx?
-        # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass # penetration_depth instead sx?
+    penetration_velocity = relative_velocity.dot(normal_vector)
+
+    # sx = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass # penetration_depth instead sx?
+    # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass # penetration_depth instead sx?
     #  separate the two bodies
     if body_1.is_static == False:
-        body_1.pos += separation_vector / 2
+        body_1.pos -= separation_vector / 2
     if body_2.is_static == False:
-        body_2.pos -= separation_vector / 2
+        body_2.pos += separation_vector / 2
+
+    if penetration_velocity > 0:
+        return
     
-    # ts = vx*ny - vy*nx 
-    # tx, ty = ny*ts, -nx*ts
-    # tx, ty = vx - px, vy - py
-    tangent = relative_velocity - impulse
-    r = 1 + max(body_1.bounce, body_2.bounce)
-    f = min(body_1.friction, body_2.friction)
+    r = max(body_1.bounce, body_2.bounce) #MIN?
+    j = -(1 + r) * penetration_velocity
+    j /= 1 / body_1.mass + 1 / body_2.mass
 
-    # j = (1 + r) * ps
-    # j /= 1 / body_1.mass + 1 / body_2.mass
-    # p = [j * nx, j * ny]
-
-    impulse /= 1 / body_1.mass + 1 / body_2.mass
-    tangent /= 1 / body_1.mass + 1 / body_2.mass
+    impulse =  normal_vector * j
 
     if body_1.is_static == False:
-        body_1.velocity -= (impulse * r + tangent * f) / body_1.mass
-
-
+        body_1.velocity -= impulse / body_1.mass
     if body_2.is_static == False:
-        body_2.velocity += (impulse * r + tangent * f) / body_2.mass
+        body_2.velocity += impulse / body_2.mass
 
+    # Coulomb friction model
+    tangent = relative_velocity - normal_vector * relative_velocity.dot(normal_vector)
+    if tangent == Vector2D(0, 0):
+        return
+    else:
+        tangent = tangent.normalize
 
+    jt = -1 * relative_velocity.dot(tangent)
+    jt /= 1 / body_1.mass + 1 / body_2.mass
 
+    static_friction = (body_1.static_friction + body_2.static_friction) / 2
+
+    if abs(jt) <= j * static_friction:
+        # friction_impulse = jt * tangent
+        friction_impulse = tangent * jt
+    else:
+        dynamic_friction = (body_1.dynamic_friction + body_2.dynamic_friction) / 2
+        # friction_impulse = -j * tangent * dynamic_friction
+        friction_impulse = tangent * (-1) * j * dynamic_friction
+
+    if body_1.is_static == False:
+        body_1.velocity -= friction_impulse / body_1.mass
+    if body_2.is_static == False:
+        body_2.velocity += friction_impulse / body_2.mass
     
+
+
+
+def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float, contact_points: list):
+    normal_vector *= -1
+    separation_vector = normal_vector * penetration_depth
+    
+    relative_velocity = body_2.velocity - body_1.velocity
+
+
+    # sx = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * nx * 1/body_1.mass #
+    # sy = max(penetration_depth - 0.01, 0) / (1 / body_1.mass + 1 / body_2.mass) * 0.8 * ny * 1/body_2.mass #
+    #  separate the two bodies
+    # if body_1.is_static == False:
+    #     body_1.pos += separation_vector / 2
+    # if body_2.is_static == False:
+    #     body_2.pos -= separation_vector / 2
+
+    if body_1.is_static:
+        body_2.pos += separation_vector
+    elif body_2.is_static:
+        body_1.pos -= separation_vector
+    else:
+        body_1.pos -= separation_vector / 2
+        body_2.pos += separation_vector / 2
+
+    # Calculate restitution (bounciness)
+    r = min(body_1.bounce, body_2.bounce)
+
+    impulses = [Vector2D(0, 0), Vector2D(0, 0)]
+    r_1_offsets = [Vector2D(0, 0), Vector2D(0, 0)]
+    r_2_offsets = [Vector2D(0, 0), Vector2D(0, 0)]
+
+    # Calculate impulses for each contact point
+    for i in range(len(contact_points)):
+        r_1 = contact_points[i] - body_1.pos
+        r_2 = contact_points[i] - body_2.pos
+        
+        r_1_offsets[i] = r_1
+        r_2_offsets[i] = r_2
+
+        r_1_perp = Vector2D(-r_1.y, r_1.x)
+        r_2_perp = Vector2D(-r_2.y, r_2.x)
+
+        relative_velocity = (body_2.velocity + r_2_perp * body_2.angular_velocity) - (body_1.velocity + r_1_perp * body_1.angular_velocity)
+        penetration_velocity = relative_velocity.dot(normal_vector)
+
+        if penetration_velocity > 0:
+            continue
+
+        j = -(1 + r) * penetration_velocity
+        j /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(normal_vector) ** 2)  / body_1.inertia + (r_2_perp.dot(normal_vector) ** 2) / body_2.inertia
+        j /= len(contact_points)
+
+        impulse = normal_vector * j
+        
+        impulses[i] = impulse
+
+    # Apply impulses for both bodies
+    for i in range(len(contact_points)):
+        impulse = impulses[i]
+        r_1 = r_1_offsets[i]
+        r_2 = r_2_offsets[i]
+
+        body_1.velocity += -impulse / body_1.mass 
+        body_1.angular_velocity += -r_1.cross(impulse) / body_1.inertia
+        body_2.velocity += impulse / body_2.mass 
+        body_2.angular_velocity += r_2.cross(impulse) / body_2.inertia
 
 
 

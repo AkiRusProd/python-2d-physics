@@ -68,14 +68,26 @@ class Vector2D:
     def __add__(self, other):
         return self.add(other)
     
+    # def __radd__(self, other):
+    #     return other.add(self)
+    
     def __sub__(self, other):
         return self.sub(other)
+    
+    # def __rsub__(self, other):
+    #     return other.sub(self)
     
     def __mul__(self, other):
         return self.mul(other)
     
+    # def __rmul__(self, other):
+    #     return self.mul(other)
+    
     def __truediv__(self, other):
         return self.div(other)
+    
+    # def __rtruediv__(self, other):
+    #     return other.div(self)
     
 
     def dot(self, other):
@@ -91,6 +103,8 @@ class Vector2D:
     @property
     def normalize(self):
         magnitude = self.magnitude
+        if magnitude == 0:
+            return Vector2D(0, 0)  #
         return Vector2D(self.x / magnitude, self.y / magnitude)
     
     def __abs__(self):

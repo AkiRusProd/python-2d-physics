@@ -14,11 +14,14 @@ from collision import aabbs_collision, circles_collision, polygons_collision, po
 # https://dyn4j.org/2010/01/sat/                                                                                        
 # https://dyn4j.org/2011/11/contact-points-using-clipping/
 # https://www.codezealot.org/archives/88/#gjk-support
+# https://en.wikipedia.org/wiki/Collision_response#Impulse-based_friction_model
+# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756t
 
 
 
 # TODO: 
-# Add 2D Rotational Kinematics
+# Add 2D Rotational Kinematics [OK]
+# Add friction to rotational bodies
 # Add SAT for polygons collision instead of AABB [OK]
 # Refactor the code
 # FIX polygons_clipping_contact_points BUG
@@ -46,11 +49,12 @@ PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
 
 
 r1 = Rectangle(
-    x = 0,
+    x = 450,
     y = 0,
     width = 50,
     height = 50,
-    name = "player"
+    name = "player",
+    mass = 50
 )
 
 r2 = Rectangle(
@@ -58,20 +62,24 @@ r2 = Rectangle(
     y = 250,
     width = 50 * 2,
     height = 50 * 2,
+    mass=100,
     # is_static=True
 )
 
 c1 = Circle(
     x = 400,
     y = 200,
-    radius = 50//2
+    radius = 50//2,
+    mass = 30,
+    name="circle1"
 )
 
 
 c2 = Circle(
     x = 150 + 100,
     y = 150 - 100,
-    radius = 50
+    radius = 50,
+    mass = 120
 )
 
 
@@ -81,9 +89,10 @@ ground = Rectangle(
     width = WIDTH,
     height = 20,
     is_static = True,
-    friction=0.9,
+    dynamic_friction=0.1,
+    static_friction=0.1,
     mass=float("inf"),
-    bounce=0,
+    bounce=0.5,
     name = "ground"
 )
 
@@ -95,7 +104,7 @@ platform = Rectangle(
     is_static = True,
     mass=float("inf"),
     bounce=0.1,
-    friction=1,
+    static_friction=1,
     name = "platform"
 )
 
@@ -108,11 +117,6 @@ BODIES = [r1, r2, ground, c1, c2, platform]
 
 # Set up physics variables
 GRAVITY = 9.8
-
-r1.mass = 300
-r2.mass = 300
-c1.mass = 30
-c2.mass = 120 #float("inf")
 
 
 
@@ -131,6 +135,7 @@ def simulate_gravity(body):
 def update_position(body, dt):
    if body.is_static == False:
         body.pos += body.velocity * dt
+        body.angle += body.angular_velocity * dt
 
 def check_screen_collision(body):
     if body.is_static == False:
@@ -140,7 +145,22 @@ def check_screen_collision(body):
             body.pos[0] = max(0 + body.radius, min(body.pos[0], WIDTH - body.radius))
        
 
+# def invert_y(surface, y, height=None): #TODO: Maybe invert the Y coordinate
+#     """
+#     Invert the Y coordinate for drawing on a Pygame surface.
 
+#     :param surface: Pygame surface on which to draw.
+#     :param y: The original Y coordinate.
+#     :param height: The height of the object if it's a rectangle (optional).
+#     :return: The inverted Y coordinate.
+#     """
+#     screen_height = surface.get_height()
+#     if height is not None:
+#         # If the object is a rectangle, adjust for its height
+#         return screen_height - y - height
+#     else:
+#         # If the object is a circle or point, no height adjustment is needed
+#         return screen_height - y
 
 FPS = 360
 dt = 1/FPS # assuming frames per second
