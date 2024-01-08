@@ -68,26 +68,33 @@ class Vector2D:
     def __add__(self, other):
         return self.add(other)
     
-    # def __radd__(self, other):
-    #     return other.add(self)
+    def __radd__(self, other):
+        return self.add(other)
     
     def __sub__(self, other):
         return self.sub(other)
     
-    # def __rsub__(self, other):
-    #     return other.sub(self)
+    def __rsub__(self, other):
+        return Vector2D(0, 0).sub(self).add(other)
     
     def __mul__(self, other):
         return self.mul(other)
     
-    # def __rmul__(self, other):
-    #     return self.mul(other)
+    def __rmul__(self, other):
+        return self.mul(other)
     
     def __truediv__(self, other):
         return self.div(other)
     
-    # def __rtruediv__(self, other):
-    #     return other.div(self)
+    def __rtruediv__(self, other):
+        if isinstance(other, Vector2D):
+            return Vector2D(other.x / self.x, other.y / self.y)
+        elif isinstance(other, (tuple, list)):
+            return Vector2D(other[0] / self.x, other[1] / self.y)
+        elif isinstance(other, (int, float)):
+            return Vector2D(other / self.x, other / self.y)
+        else:
+            raise TypeError("Unsupported operand type(s) for /: '{}' and 'Vector2D'".format(type(other).__name__))
     
 
     def dot(self, other):

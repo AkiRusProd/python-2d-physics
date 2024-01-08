@@ -19,6 +19,7 @@ from collision import aabbs_collision, circles_collision, polygons_collision, po
 # https://research.ncl.ac.uk/game/mastersdegree/gametechnologies/physicstutorials/5collisionresponse/Physics%20-%20Collision%20Response.pdf
 # https://chrishecker.com/images/e/e7/Gdmphys3.pdf
 # https://perso.liris.cnrs.fr/nicolas.pronost/UUCourses/GamePhysics/lectures/lecture%207%20Collision%20Resolution.pdf
+# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032t
 
 
 # TODO: 
@@ -45,25 +46,23 @@ blue = (0, 0, 255)
 black = (0, 0, 0)
 orange = (255, 128, 0)
 
-# Set up player properties
-PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
-
 
 
 r1 = Rectangle(
     x = 450,
     y = 0,
-    width = 50,
-    height = 50,
+    width = 25,
+    height = 25,
     name = "player",
-    mass = 50
+    mass = 50,
 )
+# r1.rotate(45, in_radians=False)
 
 r2 = Rectangle(
     x = 250,
     y = 250,
-    width = 50 * 2,
-    height = 50 * 2,
+    width = 50,
+    height = 50,
     mass=100,
     # is_static=True
 )
@@ -71,24 +70,25 @@ r2 = Rectangle(
 c1 = Circle(
     x = 400,
     y = 200,
-    radius = 50//2,
+    radius = 10,
     mass = 30,
     name="circle1"
 )
 
 
 c2 = Circle(
-    x = 150 + 100,
+    x =  WIDTH / 2 + 200,
     y = 150 - 100,
-    radius = 50,
-    mass = 120
+    radius = 25,
+    mass = 120,
+    is_static=True
 )
 
 
 ground = Rectangle(
-    x = 0 + WIDTH / 2,
-    y = HEIGHT - 20 / 2,
-    width = WIDTH,
+    x = WIDTH / 2,
+    y = HEIGHT - 20 / 1.5 - 100,
+    width = WIDTH / 2,
     height = 20,
     is_static = True,
     dynamic_friction=0.1,
@@ -99,7 +99,7 @@ ground = Rectangle(
 )
 
 platform = Rectangle(
-    x = WIDTH / 2,
+    x = WIDTH / 2 + 200,
     y = HEIGHT / 2,
     width = 200,
     height = 20,
@@ -115,9 +115,8 @@ platform.rotate(-30, in_radians=False)
 
 
 
+PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
 BODIES = [r1, r2, ground, c1, c2, platform]
-
-# Set up physics variables
 GRAVITY = 9.8
 
 
@@ -139,12 +138,12 @@ def update_position(body, dt):
         body.pos += body.velocity * dt
         body.angle += body.angular_velocity * dt
 
-def check_screen_collision(body):
-    if body.is_static == False:
-        if body.shape_type == "Rectangle":
-            body.pos[0] = max(0 + body.width / 2, min(body.pos[0], WIDTH - body.width / 2))
-        elif body.shape_type == "Circle":
-            body.pos[0] = max(0 + body.radius, min(body.pos[0], WIDTH - body.radius))
+# def check_screen_collision(body):
+#     if body.is_static == False:
+#         if body.shape_type == "Rectangle":
+#             body.pos[0] = max(0 + body.width / 2, min(body.pos[0], WIDTH - body.width / 2))
+#         elif body.shape_type == "Circle":
+#             body.pos[0] = max(0 + body.radius, min(body.pos[0], WIDTH - body.radius))
        
 
 # def invert_y(surface, y, height=None): #TODO: Maybe invert the Y coordinate
@@ -211,10 +210,6 @@ while True:
     # Apply gravity to all objects
     for body in BODIES:
         simulate_gravity(body)
-
-    # Check for collision with screen boundaries
-    for body in BODIES:
-        check_screen_collision(body)
 
     # Draw background
     screen.fill(white)

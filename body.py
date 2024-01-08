@@ -36,24 +36,8 @@ class Rectangle(Body):
 
     @property
     def vertices(self):
-        # x, y = self.pos.x, self.pos.y
         half_width = self.width / 2
         half_height = self.height / 2
-
-        # return [
-        #     Vector2D(x - half_width, y - half_height),
-        #     Vector2D(x + half_width, y - half_height),
-        #     Vector2D(x + half_width, y + half_height),
-        #     Vector2D(x - half_width, y + half_height)
-        # ]
-
-        # If position is the bottom left edge of the body
-        # return [ 
-        #     [x, y],
-        #     [x + self.width, y],
-        #     [x + self.width, y + self.height],
-        #     [x, y + self.height]
-        # ]
 
         vertices = [
             Vector2D(-half_width, -half_height),

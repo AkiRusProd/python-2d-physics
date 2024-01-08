@@ -47,9 +47,10 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
     penetration_depth = separation_vector.magnitude
 
     # Note: separation vector = normal_vector * penetration_depth
-
+    contact_point = polygons_contact_points(body_1, body_2)
     resolution(body_1, body_2, normal_vector, penetration_depth)
 
+    return contact_point
 
 
 def circles_collision(body_1: Circle, body_2: Circle):
@@ -348,7 +349,7 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
 
         j = -(1 + r) * penetration_velocity
         j /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(normal_vector) ** 2)  / body_1.inertia + (r_2_perp.dot(normal_vector) ** 2) / body_2.inertia
-        j /= len(contact_points)
+        # j /= len(contact_points)
 
         impulse = normal_vector * j
         
@@ -387,18 +388,16 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
 
         jt = -1 * relative_velocity.dot(tangent)
         jt /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(tangent) ** 2)  / body_1.inertia + (r_2_perp.dot(tangent) ** 2) / body_2.inertia
-        jt /= len(contact_points)
+        # jt /= len(contact_points)
 
         static_friction = (body_1.static_friction + body_2.static_friction) / 2
 
         j = js[i]
         if abs(jt) <= j * static_friction:
-            # friction_impulse = jt * tangent
-            friction_impulse = tangent * jt
+            friction_impulse = jt * tangent
         else:
             dynamic_friction = (body_1.dynamic_friction + body_2.dynamic_friction) / 2
-            # friction_impulse = -j * tangent * dynamic_friction
-            friction_impulse = tangent * (-1) * j * dynamic_friction
+            friction_impulse = -j * tangent * dynamic_friction
 
         friction_impulses[i] = friction_impulse
 
