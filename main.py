@@ -81,7 +81,7 @@ c2 = Circle(
     y = 150 - 100,
     radius = 25,
     mass = 120,
-    is_static=True
+    is_static=False
 )
 
 

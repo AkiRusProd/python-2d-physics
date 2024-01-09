@@ -23,6 +23,7 @@ def collide(body_1: Body, body_2: Body, include_rotation = True):
         contact_points = polygon_circle_contact_points(body_1, body_2)
     elif body_1.shape_type == "Circle" and body_2.shape_type == "Rectangle":
         contact_points = polygon_circle_contact_points(body_2, body_1)
+        normal = -normal # Temporal solution
     
     if include_rotation:
         resolution_with_rotation(body_1, body_2, normal, depth, contact_points)
