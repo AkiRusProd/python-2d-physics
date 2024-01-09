@@ -2,6 +2,37 @@ from vector import Vector2D
 from body import Body, Rectangle, Circle
 
 
+def collide(body_1: Body, body_2: Body, include_rotation = True):
+    if body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle":
+        normal, depth = polygons_collision(body_1, body_2) if include_rotation else aabbs_collision(body_1, body_2)
+    elif body_1.shape_type == "Circle" and body_2.shape_type == "Circle":
+        normal, depth = circles_collision(body_1, body_2)
+    elif body_1.shape_type == "Rectangle" and body_2.shape_type == "Circle":
+        normal, depth = polygon_circle_collision(body_1, body_2)
+    elif body_1.shape_type == "Circle" and body_2.shape_type == "Rectangle":
+        normal, depth = polygon_circle_collision(body_2, body_1)
+
+    if normal is None or depth is None:
+        return
+    
+    if body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle":
+        contact_points = polygons_contact_points(body_1, body_2)
+    elif body_1.shape_type == "Circle" and body_2.shape_type == "Circle":
+        contact_points = circles_contact_points(body_1, body_2)
+    elif body_1.shape_type == "Rectangle" and body_2.shape_type == "Circle":
+        contact_points = polygon_circle_contact_points(body_1, body_2)
+    elif body_1.shape_type == "Circle" and body_2.shape_type == "Rectangle":
+        contact_points = polygon_circle_contact_points(body_2, body_1)
+    
+    if include_rotation:
+        resolution_with_rotation(body_1, body_2, normal, depth, contact_points)
+    else:
+        resolution(body_1, body_1, normal, depth)
+
+    return contact_points
+
+
+
 def aabbs_collision(body_1: Rectangle, body_2: Rectangle):    
     assert body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle", \
         "Both body_1 and body_2 must be of shape_type 'Rectangle' for polygon collision."
@@ -22,7 +53,7 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
     
     if ad.x >= sum_half_sizes.x or ad.y >= sum_half_sizes.y:
         # If not collision
-        return
+        return None, None
 
     # If collision
     
@@ -47,10 +78,10 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
     penetration_depth = separation_vector.magnitude
 
     # Note: separation vector = normal_vector * penetration_depth
-    contact_point = polygons_contact_points(body_1, body_2)
-    resolution(body_1, body_2, normal_vector, penetration_depth)
+    # contact_point = polygons_contact_points(body_1, body_2)
+    # resolution(body_1, body_2, normal_vector, penetration_depth)
 
-    return contact_point
+    return normal_vector, penetration_depth
 
 
 def circles_collision(body_1: Circle, body_2: Circle):
@@ -61,7 +92,7 @@ def circles_collision(body_1: Circle, body_2: Circle):
 
     if distance >= body_1.radius + body_2.radius:
         # If not collision
-        return
+        return None, None
     
     # If collision
 
@@ -71,10 +102,10 @@ def circles_collision(body_1: Circle, body_2: Circle):
 
     # resolution(body_1, body_2, normal_vector, penetration_depth)
 
-    contact_point = circles_contact_points(body_1, body_2)
-    resolution_with_rotation(body_1, body_2, normal_vector, penetration_depth, contact_point)
+    # contact_point = circles_contact_points(body_1, body_2)
+    # resolution_with_rotation(body_1, body_2, normal_vector, penetration_depth, contact_point)
 
-    return contact_point
+    return normal_vector, penetration_depth
     
 
 
@@ -145,7 +176,7 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
         min_b, max_b = project_circle(circle.pos, circle.radius, axis)
         
         if max_a <= min_b or max_b <= min_a:
-            return False
+            return None, None
         
         axis_depth = min(max_b - min_a, max_a - min_b)
 
@@ -164,7 +195,7 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
     min_b, max_b = project_vertices(polygon.vertices, axis)
 
     if max_a <= min_b or max_b <= min_a:
-        return False
+        return None, None
     
     axis_depth = min(max_b - min_a, max_a - min_b)
 
@@ -180,10 +211,10 @@ def polygon_circle_collision(polygon: Rectangle, circle: Circle):
         
     # resolution(polygon, circle, normal, penetration_depth)
 
-    contact_point = polygon_circle_contact_points(polygon, circle)
-    resolution_with_rotation(polygon, circle, normal, penetration_depth, contact_point)
+    # contact_point = polygon_circle_contact_points(polygon, circle)
+    # resolution_with_rotation(polygon, circle, normal, penetration_depth, contact_point)
 
-    return contact_point
+    return normal, penetration_depth
 
 def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
     normal = Vector2D(0, 0)
@@ -200,7 +231,7 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
         min_b, max_b = project_vertices(polygon_2.vertices, axis)
 
         if min_a >= max_b or min_b >= max_a:
-            return
+            return None, None
 
         axis_depth = min(max_b - min_a, max_a - min_b)
 
@@ -219,7 +250,7 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
         min_b, max_b = project_vertices(polygon_2.vertices, axis)
 
         if min_a >= max_b or min_b >= max_a:
-            return
+            return None, None
 
         axis_depth = min(max_b - min_a, max_a - min_b)
 
@@ -234,10 +265,10 @@ def polygons_collision(polygon_1: Rectangle, polygon_2: Rectangle):
 
     # resolution(polygon_1, polygon_2, normal, depth)
 
-    contact_points = polygons_contact_points(polygon_1, polygon_2)
-    resolution_with_rotation(polygon_1, polygon_2, normal, depth, contact_points)
+    # contact_points = polygons_contact_points(polygon_1, polygon_2)
+    # resolution_with_rotation(polygon_1, polygon_2, normal, depth, contact_points)
 
-    return contact_points
+    return normal, depth
 
 
 def separate_bodies(body_1: Body, body_2: Body, normal, penetration_depth):

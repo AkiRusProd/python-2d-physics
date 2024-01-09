@@ -23,7 +23,7 @@ class Rectangle(Body):
         self.pos = Vector2D(x, y)
         self.width = width
         self.height = height
-        self.mass = mass
+        self.mass = mass if not is_static else float("inf")
         self.static_friction = static_friction
         self.dynamic_friction = dynamic_friction
         self.bounce = bounce
@@ -59,7 +59,7 @@ class Circle(Body):
         super().__init__(x, y, mass, static_friction, dynamic_friction, bounce, name, is_static)
         self.pos = Vector2D(x, y)
         self.radius = radius
-        self.mass = mass
+        self.mass = mass if not is_static else float("inf")
         self.static_friction = static_friction
         self.dynamic_friction = dynamic_friction
         self.bounce = bounce

@@ -1,7 +1,7 @@
 import pygame
 import sys
 from body import Rectangle, Circle
-from collision import aabbs_collision, circles_collision, polygons_collision, polygon_circle_collision
+from collision import collide
 
 
                                                                                                                       
@@ -238,36 +238,11 @@ while True:
             body_2 = BODIES[j]
 
             if body_1 != body_2:
-                if body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle":
-                    # polygons_collision(body_1, body_2)
-                    # DEBUG
-                    cps = polygons_collision(body_1, body_2)
-                    if cps:
-                        for cp in cps: 
-                            pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
+                contact_points = collide(body_1, body_2)
+                if contact_points is None: continue
+                for cp in contact_points:
+                    if cp is not None: pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
 
-                elif body_1.shape_type == "Circle" and body_2.shape_type == "Circle":
-                    # circles_collision(body_1, body_2)
-                    # DEBUG
-                    cp = circles_collision(body_1, body_2)
-                    if cp:
-                        cp = cp[0]
-                        pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
-
-                elif body_1.shape_type == "Rectangle" and body_2.shape_type == "Circle":
-                    # polygon_circle_collision(body_1, body_2)
-                    # DEBUG
-                    cp = polygon_circle_collision(body_1, body_2)
-                    if cp:
-                        cp = cp[0]
-                        pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
-                elif body_1.shape_type == "Circle" and body_2.shape_type == "Rectangle":
-                    # polygon_circle_collision(body_2, body_1)
-                    # DEBUG
-                    cp = polygon_circle_collision(body_2, body_1)
-                    if cp:
-                        cp = cp[0]
-                        pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
 
     # Update display
     pygame.display.flip()
