@@ -1,6 +1,6 @@
 import pygame
 import sys
-from body import Rectangle, Circle
+from body import Rectangle, Circle, Polygon
 from collision import collide
 
 
@@ -20,6 +20,7 @@ from collision import collide
 # https://chrishecker.com/images/e/e7/Gdmphys3.pdf
 # https://perso.liris.cnrs.fr/nicolas.pronost/UUCourses/GamePhysics/lectures/lecture%207%20Collision%20Resolution.pdf
 # https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032t
+# https://stackoverflow.com/questions/31106438/calculate-moment-of-inertia-given-an-arbitrary-convex-2d-polygon
 
 
 # TODO: 
@@ -50,20 +51,20 @@ orange = (255, 128, 0)
 
 r1 = Rectangle(
     x = 450,
-    y = 0,
+    y = 250,
     width = 25,
     height = 25,
     name = "player",
     mass = 50,
 )
-# r1.rotate(45, in_radians=False)
 
 r2 = Rectangle(
-    x = 250,
+    x = 200,
     y = 250,
     width = 50,
     height = 50,
     mass=100,
+    name="r2",
     # is_static=True
 )
 
@@ -85,10 +86,18 @@ c2 = Circle(
 )
 
 
+p = Polygon(
+    x = 310,
+    y = 250,
+    vertices = [(0, 0), (50, 0), (50, 25), (0, 50)],
+    mass = 100,
+)
+
+
 ground = Rectangle(
     x = WIDTH / 2,
     y = HEIGHT - 20 / 1.5 - 100,
-    width = WIDTH / 2,
+    width = WIDTH / 1.5,
     height = 20,
     is_static = True,
     dynamic_friction=0.1,
@@ -116,7 +125,7 @@ platform.rotate(-30, in_radians=False)
 
 
 PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
-BODIES = [r1, r2, ground, c1, c2, platform]
+BODIES = [r1, r2, ground, c1, c2, platform, p]
 GRAVITY = 9.8
 
 
@@ -222,7 +231,7 @@ while True:
         else:
             color = black
         
-        if body.shape_type == "Rectangle":
+        if body.shape_type == "Polygon":
             # pygame.draw.rect(screen, color, (body.pos[0] - body.width / 2, body.pos[1] - body.height / 2, body.width, body.height))
             vertices = body.vertices
 
