@@ -4,7 +4,7 @@ from body import Body, Rectangle, Circle
 
 def collide(body_1: Body, body_2: Body, include_rotation = True):
     if body_1.shape_type == "Rectangle" and body_2.shape_type == "Rectangle":
-        normal, depth = polygons_collision(body_1, body_2) if include_rotation else aabbs_collision(body_1, body_2)
+        normal, depth = polygons_collision(body_1, body_2) #if include_rotation else aabbs_collision(body_1, body_2)
     elif body_1.shape_type == "Circle" and body_2.shape_type == "Circle":
         normal, depth = circles_collision(body_1, body_2)
     elif body_1.shape_type == "Rectangle" and body_2.shape_type == "Circle":
@@ -28,7 +28,7 @@ def collide(body_1: Body, body_2: Body, include_rotation = True):
     if include_rotation:
         resolution_with_rotation(body_1, body_2, normal, depth, contact_points)
     else:
-        resolution(body_1, body_1, normal, depth)
+        resolution(body_1, body_2, normal, depth)
 
     return contact_points
 
@@ -506,6 +506,7 @@ def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
                 contact_point_2 = cp
             elif distance < min_distance:
                 min_distance = distance
+                contact_point_2 = None
                 contact_point_1 = cp
 
     for i in range(len(polygon_2.vertices)):
@@ -520,6 +521,7 @@ def polygons_contact_points(polygon_1: Rectangle, polygon_2: Rectangle):
                 contact_point_2 = cp
             elif distance < min_distance:
                 min_distance = distance
+                contact_point_2 = None
                 contact_point_1 = cp
 
     return [cp for cp in [contact_point_1, contact_point_2] if cp is not None]
