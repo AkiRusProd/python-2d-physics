@@ -80,7 +80,7 @@ c1 = Circle(
 
 c2 = Circle(
     x =  WIDTH / 2 + 200,
-    y = 150 - 100,
+    y =300,
     radius = 25,
     mass = 120,
     is_static=False
@@ -98,12 +98,12 @@ p.rotate(90, in_radians=False)
 
 ground = Rectangle(
     x = WIDTH / 2,
-    y = HEIGHT - 20 / 1.5 - 100,
+    y = 100,
     width = WIDTH / 1.5,
     height = 20,
     is_static = True,
     dynamic_friction=0.5,
-    static_friction=0.5,
+    static_friction=0.7,
     mass=float("inf"),
     bounce=0.7,
     name = "ground"
@@ -111,7 +111,7 @@ ground = Rectangle(
 
 platform = Rectangle(
     x = WIDTH / 2 + 200,
-    y = HEIGHT / 2,
+    y = 300,
     width = 200,
     height = 20,
     is_static = True,
@@ -121,11 +121,11 @@ platform = Rectangle(
     name = "platform"
 )
 
-platform.rotate(-30, in_radians=False)
+platform.rotate(30, in_radians=False)
 
 platform2 = Rectangle(
     x = 70,
-    y = 400,
+    y = 200,
     height = 20,
     width=200,
     is_static = True,
@@ -134,7 +134,7 @@ platform2 = Rectangle(
     static_friction=1,
     name = "platform2"
 )
-platform2.rotate(60, in_radians=False)
+platform2.rotate(-60, in_radians=False)
 
 PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
 BODIES = [r1, r2, ground, c1, c2, platform, platform2, p]
@@ -151,22 +151,6 @@ move_right = False
 move_up = False
 move_down = False
 
-# def invert_y(surface, y, height=None): #TODO: Maybe invert the Y coordinate
-#     """
-#     Invert the Y coordinate for drawing on a Pygame surface.
-
-#     :param surface: Pygame surface on which to draw.
-#     :param y: The original Y coordinate.
-#     :param height: The height of the object if it's a rectangle (optional).
-#     :return: The inverted Y coordinate.
-#     """
-#     screen_height = surface.get_height()
-#     if height is not None:
-#         # If the object is a rectangle, adjust for its height
-#         return screen_height - y - height
-#     else:
-#         # If the object is a circle or point, no height adjustment is needed
-#         return screen_height - y
 
 FPS = 360
 dt = 1/FPS # assuming frames per second
@@ -203,7 +187,7 @@ while True:
             
             new_rect = Rectangle(
                 x=mouse_x,
-                y=mouse_y,
+                y=HEIGHT - mouse_y,
                 width=20,
                 height=20,
                 mass=50,
@@ -217,9 +201,9 @@ while True:
     if move_right:
         r1.velocity[0] += PLAYER_SPEED_X
     if move_up:
-        r1.velocity[1] -= PLAYER_SPEED_Y
-    if move_down:
         r1.velocity[1] += PLAYER_SPEED_Y
+    if move_down:
+        r1.velocity[1] -= PLAYER_SPEED_Y
 
     space.step(dt)
 
@@ -234,14 +218,16 @@ while True:
             color = black
         
         if body.shape_type == "Polygon":
-            pygame.draw.polygon(screen, color, [(vertex.x, vertex.y) for vertex in body.vertices])
+            pygame.draw.polygon(screen, color, [(vertex.x, HEIGHT -  vertex.y) for vertex in body.vertices])
 
         elif body.shape_type == "Circle":
-            pygame.draw.circle(screen, color, (body.pos[0], body.pos[1]), body.radius)
+            pygame.draw.circle(screen, color, (body.pos[0], HEIGHT -  body.pos[1]), body.radius)
 
     for point in space._contact_points:
-        pygame.draw.circle(screen, green, (point.x, point.y), 4)
+        pygame.draw.circle(screen, green, (point.x,HEIGHT -  point.y), 4)
 
+    # display_surface = pygame.display.get_surface()
+    # display_surface.blit(pygame.transform.flip(display_surface, False, True), dest=(0, 0))
     # Update display
     pygame.display.flip()
 

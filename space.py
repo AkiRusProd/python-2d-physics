@@ -15,7 +15,7 @@ class Space():
     def simulate_gravity(self, dt):
         for body in self.bodies:
             if body.is_static == False:
-                body.velocity[1] += self.gravity * body.mass * dt
+                body.velocity[1] -= self.gravity * body.mass * dt
 
     def update_position(self, dt):
         for body in self.bodies:
