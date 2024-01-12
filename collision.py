@@ -348,7 +348,7 @@ def resolution(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_
 
 
 
-def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float, contact_points: list):
+def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_depth: float, contact_point: list[Vector2D]):
     normal_vector *= -1
 
     separate_bodies(body_1, body_2, normal_vector, penetration_depth)
@@ -358,93 +358,58 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
     # Calculate restitution (bounciness)
     r = max(body_1.bounce, body_2.bounce)
 
-    impulses = [Vector2D(0, 0), Vector2D(0, 0)]
-    r_1_offsets = [Vector2D(0, 0), Vector2D(0, 0)]
-    r_2_offsets = [Vector2D(0, 0), Vector2D(0, 0)]
-    js = [0, 0]
-
-    if len(contact_points) == 2: contact_points = [(contact_points[0] + contact_points[1]) / 2] # average contact points (experemental solution)
+    if len(contact_point) == 2: 
+        contact_point = (contact_point[0] + contact_point[1]) / 2
+    else:
+        contact_point = contact_point[0]
 
     # Calculate impulses for each contact point
-    for i in range(len(contact_points)):
-        r_1 = contact_points[i] - body_1.pos
-        r_2 = contact_points[i] - body_2.pos
-        
-        r_1_offsets[i] = r_1
-        r_2_offsets[i] = r_2
+    
+    r_1 = contact_point - body_1.pos
+    r_2 = contact_point - body_2.pos
 
-        r_1_perp = Vector2D(-r_1.y, r_1.x)
-        r_2_perp = Vector2D(-r_2.y, r_2.x)
+    r_1_perp = Vector2D(-r_1.y, r_1.x)
+    r_2_perp = Vector2D(-r_2.y, r_2.x)
 
-        relative_velocity = (body_2.velocity + r_2_perp * body_2.angular_velocity) - (body_1.velocity + r_1_perp * body_1.angular_velocity)
-        penetration_velocity = relative_velocity.dot(normal_vector)
+    relative_velocity = (body_2.velocity + r_2_perp * body_2.angular_velocity) - (body_1.velocity + r_1_perp * body_1.angular_velocity)
+    penetration_velocity = relative_velocity.dot(normal_vector)
 
-        if penetration_velocity > 0:
-            continue
+    if penetration_velocity > 0:
+        return
 
-        j = -(1 + r) * penetration_velocity
-        j /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(normal_vector) ** 2)  / body_1.inertia + (r_2_perp.dot(normal_vector) ** 2) / body_2.inertia
-        # j /= len(contact_points)
+    j = -(1 + r) * penetration_velocity
+    j /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(normal_vector) ** 2)  / body_1.inertia + (r_2_perp.dot(normal_vector) ** 2) / body_2.inertia
 
-        impulse = normal_vector * j
-        
-        impulses[i] = impulse
-        js[i] = j
+    impulse = normal_vector * j
 
-    # Apply impulses for both bodies
-    for i in range(len(contact_points)):
-        impulse = impulses[i]
-        r_1 = r_1_offsets[i]
-        r_2 = r_2_offsets[i]
-
-        body_1.velocity -= impulse / body_1.mass 
-        body_1.angular_velocity -= r_1.cross(impulse) / body_1.inertia
-        body_2.velocity += impulse / body_2.mass 
-        body_2.angular_velocity += r_2.cross(impulse) / body_2.inertia
+    body_1.velocity -= impulse / body_1.mass 
+    body_1.angular_velocity -= r_1.cross(impulse) / body_1.inertia
+    body_2.velocity += impulse / body_2.mass 
+    body_2.angular_velocity += r_2.cross(impulse) / body_2.inertia
 
 
-    friction_impulses = [Vector2D(0, 0), Vector2D(0, 0)]
-    for i in range(len(contact_points)):
-        r_1 = contact_points[i] - body_1.pos
-        r_2 = contact_points[i] - body_2.pos
+    relative_velocity = (body_2.velocity + r_2_perp * body_2.angular_velocity) - (body_1.velocity + r_1_perp * body_1.angular_velocity)
+    tangent = relative_velocity - normal_vector * relative_velocity.dot(normal_vector)
+    if tangent == Vector2D(0, 0):
+        return
+    else:
+        tangent = tangent.normalize
 
-        r_1_offsets[i] = r_1
-        r_2_offsets[i] = r_2
+    jt = -1 * relative_velocity.dot(tangent)
+    jt /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(tangent) ** 2)  / body_1.inertia + (r_2_perp.dot(tangent) ** 2) / body_2.inertia
 
-        r_1_perp = Vector2D(-r_1.y, r_1.x)
-        r_2_perp = Vector2D(-r_2.y, r_2.x)
+    static_friction = (body_1.static_friction + body_2.static_friction) / 2
 
-        relative_velocity = (body_2.velocity + r_2_perp * body_2.angular_velocity) - (body_1.velocity + r_1_perp * body_1.angular_velocity)
-        tangent = relative_velocity - normal_vector * relative_velocity.dot(normal_vector)
-        if tangent == Vector2D(0, 0):
-            continue
-        else:
-            tangent = tangent.normalize
-
-        jt = -1 * relative_velocity.dot(tangent)
-        jt /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(tangent) ** 2)  / body_1.inertia + (r_2_perp.dot(tangent) ** 2) / body_2.inertia
-        # jt /= len(contact_points)
-
-        static_friction = (body_1.static_friction + body_2.static_friction) / 2
-
-        j = js[i]
-        if abs(jt) <= j * static_friction:
-            friction_impulse = jt * tangent
-        else:
-            dynamic_friction = (body_1.dynamic_friction + body_2.dynamic_friction) / 2
-            friction_impulse = -j * tangent * dynamic_friction
-
-        friction_impulses[i] = friction_impulse
-
-    for i in range(len(contact_points)):
-        friction_impulse = friction_impulses[i]
-        r_1 = r_1_offsets[i]
-        r_2 = r_2_offsets[i]
-
-        body_1.velocity -= friction_impulse / body_1.mass 
-        body_1.angular_velocity -= r_1.cross(friction_impulse) / body_1.inertia
-        body_2.velocity += friction_impulse / body_2.mass 
-        body_2.angular_velocity += r_2.cross(friction_impulse) / body_2.inertia
+    if abs(jt) <= j * static_friction:
+        friction_impulse = jt * tangent
+    else:
+        dynamic_friction = (body_1.dynamic_friction + body_2.dynamic_friction) / 2
+        friction_impulse = -j * tangent * dynamic_friction
+ 
+    body_1.velocity -= friction_impulse / body_1.mass 
+    body_1.angular_velocity -= r_1.cross(friction_impulse) / body_1.inertia
+    body_2.velocity += friction_impulse / body_2.mass 
+    body_2.angular_velocity += r_2.cross(friction_impulse) / body_2.inertia
 
 
 

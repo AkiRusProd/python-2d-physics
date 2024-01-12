@@ -1,7 +1,7 @@
 import pygame
 import sys
 from body import Rectangle, Circle, Polygon
-from collision import collide
+from space import Space
 
 
                                                                                                                       
@@ -46,6 +46,7 @@ green = (0, 255, 0)
 blue = (0, 0, 255)
 black = (0, 0, 0)
 orange = (255, 128, 0)
+cyan = (0, 255, 255)
 
 
 
@@ -93,6 +94,7 @@ p = Polygon(
     mass = 100,
 )
 
+p.rotate(90, in_radians=False)
 
 ground = Rectangle(
     x = WIDTH / 2,
@@ -100,8 +102,8 @@ ground = Rectangle(
     width = WIDTH / 1.5,
     height = 20,
     is_static = True,
-    dynamic_friction=0.1,
-    static_friction=0.1,
+    dynamic_friction=0.5,
+    static_friction=0.5,
     mass=float("inf"),
     bounce=0.7,
     name = "ground"
@@ -121,14 +123,25 @@ platform = Rectangle(
 
 platform.rotate(-30, in_radians=False)
 
-
-
+platform2 = Rectangle(
+    x = 70,
+    y = 400,
+    height = 20,
+    width=200,
+    is_static = True,
+    mass=float("inf"),
+    bounce=0.8,
+    static_friction=1,
+    name = "platform2"
+)
+platform2.rotate(60, in_radians=False)
 
 PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
-BODIES = [r1, r2, ground, c1, c2, platform, p]
+BODIES = [r1, r2, ground, c1, c2, platform, platform2, p]
 GRAVITY = 9.8
 
 
+space = Space(BODIES, GRAVITY)
 
 
 
@@ -137,23 +150,6 @@ move_left = False
 move_right = False
 move_up = False
 move_down = False
-
-def simulate_gravity(body):
-    if body.is_static == False:
-        body.velocity[1] += GRAVITY * body.mass * dt
-
-def update_position(body, dt):
-   if body.is_static == False:
-        body.pos += body.velocity * dt
-        body.angle += body.angular_velocity * dt
-
-# def check_screen_collision(body):
-#     if body.is_static == False:
-#         if body.shape_type == "Rectangle":
-#             body.pos[0] = max(0 + body.width / 2, min(body.pos[0], WIDTH - body.width / 2))
-#         elif body.shape_type == "Circle":
-#             body.pos[0] = max(0 + body.radius, min(body.pos[0], WIDTH - body.radius))
-       
 
 # def invert_y(surface, y, height=None): #TODO: Maybe invert the Y coordinate
 #     """
@@ -202,6 +198,18 @@ while True:
                 move_up = False
             elif event.key == pygame.K_DOWN:
                 move_down = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            
+            new_rect = Rectangle(
+                x=mouse_x,
+                y=mouse_y,
+                width=20,
+                height=20,
+                mass=50,
+                
+            )
+            space.add(new_rect)
 
     # Update player position based on movement flags
     if move_left:
@@ -213,14 +221,8 @@ while True:
     if move_down:
         r1.velocity[1] += PLAYER_SPEED_Y
 
-    for body in BODIES:
-        update_position(body, dt)
+    space.step(dt)
 
-    # Apply gravity to all objects
-    for body in BODIES:
-        simulate_gravity(body)
-
-    # Draw background
     screen.fill(white)
 
     for body in BODIES:
@@ -232,29 +234,15 @@ while True:
             color = black
         
         if body.shape_type == "Polygon":
-            # pygame.draw.rect(screen, color, (body.pos[0] - body.width / 2, body.pos[1] - body.height / 2, body.width, body.height))
-            vertices = body.vertices
-
-            points = [(vertex.x, vertex.y) for vertex in vertices]
-            pygame.draw.polygon(screen, color, points)
+            pygame.draw.polygon(screen, color, [(vertex.x, vertex.y) for vertex in body.vertices])
 
         elif body.shape_type == "Circle":
             pygame.draw.circle(screen, color, (body.pos[0], body.pos[1]), body.radius)
 
-    for i in range(len(BODIES) - 1):
-        for j in range(i + 1, len(BODIES)):
-            body_1 = BODIES[i]
-            body_2 = BODIES[j]
-
-            if body_1 != body_2:
-                contact_points = collide(body_1, body_2)
-                if contact_points is None: continue
-                for cp in contact_points:
-                    if cp is not None: pygame.draw.circle(screen, green, (cp.x, cp.y), 5)
-
+    for point in space._contact_points:
+        pygame.draw.circle(screen, green, (point.x, point.y), 4)
 
     # Update display
     pygame.display.flip()
 
-    # Control frame rate
     pygame.time.Clock().tick(FPS)
