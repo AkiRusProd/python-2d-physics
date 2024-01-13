@@ -76,8 +76,8 @@ def aabbs_collision(body_1: Rectangle, body_2: Rectangle):
         separation_vector.y = -separation_vector.y
 
 
-    normal_vector = separation_vector.normalize
-    penetration_depth = separation_vector.magnitude
+    normal_vector = separation_vector.normalize()
+    penetration_depth = separation_vector.magnitude()
 
     # Note: separation vector = normal_vector * penetration_depth
     # contact_point = polygons_contact_points(body_1, body_2)
@@ -98,7 +98,7 @@ def circles_collision(body_1: Circle, body_2: Circle):
     
     # If collision
 
-    normal_vector = (body_1.pos - body_2.pos).normalize
+    normal_vector = (body_1.pos - body_2.pos).normalize()
 
     penetration_depth  = body_1.radius + body_2.radius - distance
 
@@ -112,7 +112,7 @@ def circles_collision(body_1: Circle, body_2: Circle):
 
 
 def project_circle(center, radius: float, axis: Vector2D):
-    direction = axis.normalize
+    direction = axis.normalize()
     # direction_and_radius = Vector2D(*[direction[i] * radius for i in range(len(direction))])
     direction_and_radius = direction * radius
 
@@ -171,7 +171,7 @@ def polygon_circle_collision(polygon: Polygon, circle: Circle):
 
         edge = vb - va
 
-        axis = Vector2D(-edge.y, edge.x).normalize
+        axis = Vector2D(-edge.y, edge.x).normalize()
        
         # project circle onto axis
         min_a, max_a = project_vertices(polygon.vertices, axis)
@@ -191,7 +191,7 @@ def polygon_circle_collision(polygon: Polygon, circle: Circle):
     
     cp = polygon.vertices[cp_index]
     
-    axis = (cp - circle.pos).normalize
+    axis = (cp - circle.pos).normalize()
 
     min_a, max_a = project_circle(circle.pos, circle.radius, axis)
     min_b, max_b = project_vertices(polygon.vertices, axis)
@@ -206,7 +206,7 @@ def polygon_circle_collision(polygon: Polygon, circle: Circle):
         normal = axis
 
 
-    direction = (polygon.pos - circle.pos).normalize
+    direction = (polygon.pos - circle.pos).normalize()
    
     if direction.dot(normal) < 0:
         normal *= -1
@@ -227,7 +227,7 @@ def polygons_collision(polygon_1: Polygon, polygon_2: Polygon):
         vb = polygon_1.vertices[(i + 1) % len(polygon_1.vertices)]
 
         edge = vb - va
-        axis = Vector2D(-edge.y, edge.x).normalize
+        axis = Vector2D(-edge.y, edge.x).normalize()
 
         min_a, max_a = project_vertices(polygon_1.vertices, axis)
         min_b, max_b = project_vertices(polygon_2.vertices, axis)
@@ -246,7 +246,7 @@ def polygons_collision(polygon_1: Polygon, polygon_2: Polygon):
         vb = polygon_2.vertices[(i + 1) % len(polygon_2.vertices)]
 
         edge = vb - va
-        axis = Vector2D(-edge.y, edge.x).normalize
+        axis = Vector2D(-edge.y, edge.x).normalize()
 
         min_a, max_a = project_vertices(polygon_1.vertices, axis)
         min_b, max_b = project_vertices(polygon_2.vertices, axis)
@@ -260,7 +260,7 @@ def polygons_collision(polygon_1: Polygon, polygon_2: Polygon):
             depth = axis_depth
             normal = axis
 
-    direction = (polygon_1.pos - polygon_2.pos).normalize
+    direction = (polygon_1.pos - polygon_2.pos).normalize()
 
     if direction.dot(normal) < 0:
         normal *= -1
@@ -325,7 +325,7 @@ def resolution(body_1: Body, body_2: Body, normal_vector: Vector2D, penetration_
     if tangent == Vector2D(0, 0):
         return
     else:
-        tangent = tangent.normalize
+        tangent = tangent.normalize()
 
     jt = -1 * relative_velocity.dot(tangent)
     jt /= 1 / body_1.mass + 1 / body_2.mass
@@ -393,7 +393,7 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
     if tangent == Vector2D(0, 0):
         return
     else:
-        tangent = tangent.normalize
+        tangent = tangent.normalize()
 
     jt = -1 * relative_velocity.dot(tangent)
     jt /=  1 / body_1.mass + 1 / body_2.mass + (r_1_perp.dot(tangent) ** 2)  / body_1.inertia + (r_2_perp.dot(tangent) ** 2) / body_2.inertia
@@ -415,7 +415,7 @@ def resolution_with_rotation(body_1: Body, body_2: Body, normal_vector: Vector2D
 
 
 def circles_contact_points(body_1: Circle, body_2: Circle):
-    normal = (body_2.pos - body_1.pos).normalize
+    normal = (body_2.pos - body_1.pos).normalize()
 
     contact_point = body_1.pos + normal * body_1.radius
 
@@ -541,8 +541,8 @@ def best_edge(vertices, n):
     v0 = vertices[(index - 1) % len(vertices)]
     l = v - v1
     r = v - v0
-    l = l.normalize
-    r = r.normalize
+    l = l.normalize()
+    r = r.normalize()
     if r.dot(n) <= l.dot(n):
         return (v, v0)
     else:
@@ -559,7 +559,7 @@ def polygons_clipping_contact_points(polygon_1, polygon_2, n):
     flip = ref != e1
 
     refv = ref[1] - ref[0]
-    refv = refv.normalize
+    refv = refv.normalize()
     o1 = refv.dot(ref[0])
     cp = clip(inc[0], inc[1], refv, o1)
     if len(cp) < 2:

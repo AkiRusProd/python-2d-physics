@@ -103,13 +103,11 @@ class Vector2D:
     def cross(self, other):
         return self.x * other.y - self.y * other.x
 
-    @property
     def magnitude(self):
         return math.sqrt(self.x**2 + self.y**2)
 
-    @property
     def normalize(self):
-        magnitude = self.magnitude
+        magnitude = self.magnitude()
         if magnitude == 0:
             return Vector2D(0, 0)  #
         return Vector2D(self.x / magnitude, self.y / magnitude)
@@ -118,7 +116,7 @@ class Vector2D:
         return Vector2D(abs(self.x), abs(self.y))
     
     def __len__(self):
-        return self.magnitude
+        return self.magnitude()
     
     def distance_to(self, other):
         return Vector2D.distance(self, other)
