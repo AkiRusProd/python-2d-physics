@@ -4,6 +4,7 @@ from body import Rectangle, Circle, Polygon
 from space import Space
 
 
+
                                                                                                                       
 # References:                                                                                                                                                                                                                                 
 # https://2dengine.com/doc/collisions.html                                                                              
@@ -31,54 +32,57 @@ from space import Space
 # FIX polygons_clipping_contact_points BUG
 
 
+
+# Constants
+WIDTH, HEIGHT = 800, 600
+PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
+FPS = 360
+GRAVITY = 9.8
+COLORS = {
+    "white": (255, 255, 255),
+    "red": (255, 0, 0),
+    "green": (0, 255, 0),
+    "blue": (0, 0, 255),
+    "black": (0, 0, 0),
+    "orange": (255, 128, 0),
+    "cyan": (0, 255, 255),
+}
+
+
+
+
 # Initialize Pygame
 pygame.init()
-
-# Set up display
-WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Falling Squares with Collision and Pushing")
-
-# Set up colors
-white = (255, 255, 255)
-red = (255, 0, 0)
-green = (0, 255, 0)
-blue = (0, 0, 255)
-black = (0, 0, 0)
-orange = (255, 128, 0)
-cyan = (0, 255, 255)
+pygame.display.set_caption("2D Physics Engine")
 
 
 
-r1 = Rectangle(
+recancle_1 = Rectangle(
     x = 450,
     y = 250,
     width = 25,
     height = 25,
-    name = "player",
+    name = "Player",
     mass = 50,
 )
 
-r2 = Rectangle(
+recancle_2 = Rectangle(
     x = 200,
     y = 250,
     width = 50,
     height = 50,
     mass=100,
-    name="r2",
-    # is_static=True
 )
 
-c1 = Circle(
+circle_1 = Circle(
     x = 400,
     y = 200,
     radius = 10,
     mass = 30,
-    name="circle1"
 )
 
-
-c2 = Circle(
+circle_2 = Circle(
     x =  WIDTH / 2 + 200,
     y =300,
     radius = 25,
@@ -87,16 +91,16 @@ c2 = Circle(
 )
 
 
-p = Polygon(
+polygon_1 = Polygon(
     x = 310,
     y = 250,
     vertices = [(0, 0), (50, 0), (50, 25), (0, 50)],
     mass = 100,
 )
 
-p.rotate(90, in_radians=False)
+polygon_1.rotate(90, in_radians=False)
 
-ground = Rectangle(
+rectangle_3 = Rectangle(
     x = WIDTH / 2,
     y = 100,
     width = WIDTH / 1.5,
@@ -104,44 +108,36 @@ ground = Rectangle(
     is_static = True,
     dynamic_friction=0.5,
     static_friction=0.7,
-    mass=float("inf"),
     bounce=0.7,
-    name = "ground"
+    name = "Ground"
 )
 
-platform = Rectangle(
-    x = WIDTH / 2 + 200,
+platform_1 = Rectangle(
+    x = 600,
     y = 300,
     width = 200,
     height = 20,
     is_static = True,
-    mass=float("inf"),
     bounce=0.8,
-    static_friction=1,
-    name = "platform"
+    static_friction=1
 )
 
-platform.rotate(30, in_radians=False)
+platform_1.rotate(30, in_radians=False)
 
-platform2 = Rectangle(
+platform_2 = Rectangle(
     x = 70,
     y = 200,
     height = 20,
     width=200,
     is_static = True,
-    mass=float("inf"),
     bounce=0.8,
-    static_friction=1,
-    name = "platform2"
+    static_friction=1
 )
-platform2.rotate(-60, in_radians=False)
 
-PLAYER_SPEED_X = PLAYER_SPEED_Y = 10
-BODIES = [r1, r2, ground, c1, c2, platform, platform2, p]
-GRAVITY = 9.8
+platform_2.rotate(-60, in_radians=False)
 
 
-space = Space(BODIES, GRAVITY)
+space = Space([recancle_1, recancle_2, rectangle_3, circle_1, circle_2, polygon_1, platform_1, platform_2], GRAVITY)
 
 
 
@@ -152,9 +148,7 @@ move_up = False
 move_down = False
 
 
-FPS = 360
 dt = 1/FPS # assuming frames per second
-        
 # clock = pygame.time.Clock() 
 
 # Main game loop
@@ -197,25 +191,25 @@ while True:
 
     # Update player position based on movement flags
     if move_left:
-        r1.velocity[0] -= PLAYER_SPEED_X
+        recancle_1.velocity[0] -= PLAYER_SPEED_X
     if move_right:
-        r1.velocity[0] += PLAYER_SPEED_X
+        recancle_1.velocity[0] += PLAYER_SPEED_X
     if move_up:
-        r1.velocity[1] += PLAYER_SPEED_Y
+        recancle_1.velocity[1] += PLAYER_SPEED_Y
     if move_down:
-        r1.velocity[1] -= PLAYER_SPEED_Y
+        recancle_1.velocity[1] -= PLAYER_SPEED_Y
 
     space.step(dt)
 
-    screen.fill(white)
+    screen.fill(COLORS["white"])
 
-    for body in BODIES:
-        if body.name == "player":
-            color = red
+    for body in space.bodies:
+        if body.name == "Player":
+            color = COLORS["red"]
         elif body.is_static:
-            color = orange
+            color = COLORS["orange"]
         else:
-            color = black
+            color = COLORS["black"]
         
         if body.shape_type == "Polygon":
             pygame.draw.polygon(screen, color, [(vertex.x, HEIGHT -  vertex.y) for vertex in body.vertices])
@@ -224,7 +218,7 @@ while True:
             pygame.draw.circle(screen, color, (body.pos[0], HEIGHT -  body.pos[1]), body.radius)
 
     for point in space._contact_points:
-        pygame.draw.circle(screen, green, (point.x,HEIGHT -  point.y), 4)
+        pygame.draw.circle(screen, COLORS["green"], (point.x,HEIGHT -  point.y), 4)
 
     # display_surface = pygame.display.get_surface()
     # display_surface.blit(pygame.transform.flip(display_surface, False, True), dest=(0, 0))
