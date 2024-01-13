@@ -26,8 +26,9 @@ from space import Space
 # Add 2D Rotational Kinematics [OK]
 # Add friction to rotational bodies [OK]
 # Add SAT for polygons collision instead of AABB [OK]
-# Refactor the code
-# FIX polygons_clipping_contact_points BUG
+# Refactor and optimize the code [NEED]
+# FIX polygons_clipping_contact_points BUG [NEED]
+
 
 # Small example scene
 
