@@ -4,15 +4,13 @@ from body import Rectangle, Circle, Polygon
 from space import Space
 
 
-
-                                                                                                                      
-# References:                                                                                                                                                                                                                                 
-# https://2dengine.com/doc/collisions.html                                                                              
-# https://habr.com/en/articles/336908/                                                                                  
-# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t   
-# https://habr.com/en/articles/509568/                                                                                  
-# https://www.jeffreythompson.org/collision-detection/table_of_contents.php                                             
-# https://dyn4j.org/2010/01/sat/                                                                                        
+# References:
+# https://2dengine.com/doc/collisions.html
+# https://habr.com/en/articles/336908/
+# https://code.tutsplus.com/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331t
+# https://habr.com/en/articles/509568/
+# https://www.jeffreythompson.org/collision-detection/table_of_contents.php
+# https://dyn4j.org/2010/01/sat/
 # https://dyn4j.org/2011/11/contact-points-using-clipping/
 # https://www.codezealot.org/archives/88/#gjk-support
 # https://en.wikipedia.org/wiki/Collision_response#Impulse-based_friction_model
@@ -24,14 +22,14 @@ from space import Space
 # https://stackoverflow.com/questions/31106438/calculate-moment-of-inertia-given-an-arbitrary-convex-2d-polygon
 
 
-# TODO: 
+# TODO:
 # Add 2D Rotational Kinematics [OK]
 # Add friction to rotational bodies [OK]
 # Add SAT for polygons collision instead of AABB [OK]
 # Refactor the code
 # FIX polygons_clipping_contact_points BUG
 
-
+# Small example scene
 
 # Constants
 WIDTH, HEIGHT = 800, 600
@@ -49,96 +47,86 @@ COLORS = {
 }
 
 
-
-
 # Initialize Pygame
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("2D Physics Engine")
 
 
-
 recancle_1 = Rectangle(
-    x = 450,
-    y = 250,
-    width = 25,
-    height = 25,
-    name = "Player",
-    mass = 50,
+    x=450,
+    y=250,
+    width=25,
+    height=25,
+    name="Player",
+    mass=50,
 )
 
 recancle_2 = Rectangle(
-    x = 200,
-    y = 250,
-    width = 50,
-    height = 50,
+    x=200,
+    y=250,
+    width=50,
+    height=50,
     mass=100,
 )
 
 circle_1 = Circle(
-    x = 400,
-    y = 200,
-    radius = 10,
-    mass = 30,
+    x=400,
+    y=200,
+    radius=10,
+    mass=30,
 )
 
-circle_2 = Circle(
-    x =  WIDTH / 2 + 200,
-    y =300,
-    radius = 25,
-    mass = 120,
-    is_static=False
-)
+circle_2 = Circle(x=WIDTH / 2 + 200, y=300, radius=25, mass=120, is_static=False)
 
 
 polygon_1 = Polygon(
-    x = 310,
-    y = 250,
-    vertices = [(0, 0), (50, 0), (50, 25), (0, 50)],
-    mass = 100,
+    x=310,
+    y=250,
+    vertices=[(0, 0), (50, 0), (50, 25), (0, 50)],
+    mass=100,
 )
 
 polygon_1.rotate(90, in_radians=False)
 
 rectangle_3 = Rectangle(
-    x = WIDTH / 2,
-    y = 100,
-    width = WIDTH / 1.5,
-    height = 20,
-    is_static = True,
+    x=WIDTH / 2,
+    y=100,
+    width=WIDTH / 1.5,
+    height=20,
+    is_static=True,
     dynamic_friction=0.5,
     static_friction=0.7,
     bounce=0.7,
-    name = "Ground"
+    name="Ground",
 )
 
 platform_1 = Rectangle(
-    x = 600,
-    y = 300,
-    width = 200,
-    height = 20,
-    is_static = True,
-    bounce=0.8,
-    static_friction=1
+    x=600, y=300, width=200, height=20, is_static=True, bounce=0.8, static_friction=1
 )
 
 platform_1.rotate(30, in_radians=False)
 
 platform_2 = Rectangle(
-    x = 70,
-    y = 200,
-    height = 20,
-    width=200,
-    is_static = True,
-    bounce=0.8,
-    static_friction=1
+    x=70, y=200, height=20, width=200, is_static=True, bounce=0.8, static_friction=1
 )
 
 platform_2.rotate(-60, in_radians=False)
 
 
-space = Space([recancle_1, recancle_2, rectangle_3, circle_1, circle_2, polygon_1, platform_1, platform_2], GRAVITY)
-
+space = Space(
+    [
+        recancle_1,
+        recancle_2,
+        rectangle_3,
+        circle_1,
+        circle_2,
+        polygon_1,
+        platform_1,
+        platform_2,
+    ],
+    GRAVITY,
+)
 
 
 # Initialize movement flags
@@ -148,8 +136,8 @@ move_up = False
 move_down = False
 
 
-dt = 1/FPS # assuming frames per second
-# clock = pygame.time.Clock() 
+dt = 1 / FPS  # assuming frames per second
+# clock = pygame.time.Clock()
 
 # Main game loop
 while True:
@@ -178,14 +166,13 @@ while True:
                 move_down = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            
+
             new_rect = Rectangle(
                 x=mouse_x,
                 y=HEIGHT - mouse_y,
                 width=20,
                 height=20,
                 mass=50,
-                
             )
             space.add(new_rect)
 
@@ -210,15 +197,21 @@ while True:
             color = COLORS["orange"]
         else:
             color = COLORS["black"]
-        
+
         if body.shape_type == "Polygon":
-            pygame.draw.polygon(screen, color, [(vertex.x, HEIGHT -  vertex.y) for vertex in body.vertices])
+            pygame.draw.polygon(
+                screen,
+                color,
+                [(vertex.x, HEIGHT - vertex.y) for vertex in body.vertices],
+            )
 
         elif body.shape_type == "Circle":
-            pygame.draw.circle(screen, color, (body.pos[0], HEIGHT -  body.pos[1]), body.radius)
+            pygame.draw.circle(
+                screen, color, (body.pos[0], HEIGHT - body.pos[1]), body.radius
+            )
 
     for point in space._contact_points:
-        pygame.draw.circle(screen, COLORS["green"], (point.x,HEIGHT -  point.y), 4)
+        pygame.draw.circle(screen, COLORS["green"], (point.x, HEIGHT - point.y), 4)
 
     # display_surface = pygame.display.get_surface()
     # display_surface.blit(pygame.transform.flip(display_surface, False, True), dest=(0, 0))

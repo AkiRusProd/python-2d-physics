@@ -2,7 +2,7 @@ from body import Body
 from collision import collide
 
 
-class Space():
+class Space:
     def __init__(self, bodies: list[Body], gravity = 9.8):
         self.bodies: list[Body] = bodies
         self.gravity = gravity
@@ -33,12 +33,11 @@ class Space():
                 contact_points = collide(self.bodies[i], self.bodies[j])
                 if contact_points is None:
                     continue
-                
-             
+
                 for point in contact_points:
-                    if point is None: 
+                    if point is None:
                         continue
-                    
+
                     self._contact_points.append(point)
 
     def step(self, dt):
