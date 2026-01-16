@@ -1,5 +1,5 @@
-from body import Body
-from collision import collide
+from .body import Body
+from .collision import collide
 
 
 def intersect_aabb(body_a, body_b):
@@ -15,10 +15,10 @@ def intersect_aabb(body_a, body_b):
 
 
 class Space:
-    def __init__(self, bodies: list[Body], gravity = 9.8):
+    def __init__(self, bodies: list[Body], gravity = 9.8, rotation=True):
         self.bodies: list[Body] = bodies
         self.gravity = gravity
-
+        self.rotation = rotation
         self._contact_points = []
 
     def add(self, body: Body):
@@ -33,7 +33,8 @@ class Space:
         for body in self.bodies:
             if body.is_static == False:
                 body.pos += body.velocity * dt
-                body.angle += body.angular_velocity * dt
+				
+                if self.rotation: body.angle += body.angular_velocity * dt
 
     def handle_collisions(self):
         self._contact_points = []
@@ -44,8 +45,7 @@ class Space:
 
                 if not intersect_aabb(self.bodies[i], self.bodies[j]):
                     continue
-
-                contact_points = collide(self.bodies[i], self.bodies[j])
+                contact_points = collide(self.bodies[i], self.bodies[j], self.rotation)
                 if contact_points is None:
                     continue
 

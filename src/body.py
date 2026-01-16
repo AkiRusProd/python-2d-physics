@@ -1,5 +1,5 @@
 import math
-from vector import Vector2D
+from .vector import Vector2D
 
 
 class Body():

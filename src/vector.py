@@ -48,6 +48,8 @@ class Vector2D:
     def __iter__(self):
         yield self.x
         yield self.y
+    def __round__(self, ndigits):
+        return Vector2D(round(self.x, ndigits), round(self.y, ndigits))
 
     def __getitem__(self, index):
         if index == 0:

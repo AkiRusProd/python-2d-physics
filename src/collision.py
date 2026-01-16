@@ -1,7 +1,6 @@
-from vector import Vector2D
-from body import Body, Polygon, Rectangle, Circle
-
-
+from .vector import Vector2D
+from .body import Body, Polygon, Rectangle, Circle
+    
 def collide(body_1: Body, body_2: Body, include_rotation = True):
     if body_1.shape_type == "Polygon" and body_2.shape_type == "Polygon":
         normal, depth = polygons_collision(body_1, body_2) #if include_rotation else aabbs_collision(body_1, body_2)
